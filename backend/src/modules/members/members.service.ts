@@ -1,0 +1,35 @@
+import { HttpError } from "../../shared/http-error.js";
+import { assertTeamExists } from "../teams/teams.service.js";
+import {
+  createMemberForTeam,
+  listMembersByTeamId,
+  memberBelongsToTeam
+} from "./members.repository.js";
+import type { CreateMemberInput, Member } from "./members.types.js";
+
+export async function getMembersByTeamId(teamId: number): Promise<Member[]> {
+  await assertTeamExists(teamId);
+  return listMembersByTeamId(teamId);
+}
+
+export async function createMember(teamId: number, input: CreateMemberInput): Promise<Member> {
+  await assertTeamExists(teamId);
+
+  try {
+    return await createMemberForTeam(teamId, input);
+  } catch (error) {
+    if (typeof error === "object" && error !== null && "code" in error && error.code === "23505") {
+      throw new HttpError(409, "A member with this email already exists in the team");
+    }
+
+    throw error;
+  }
+}
+
+export async function assertMemberInTeam(teamId: number, memberId: number): Promise<void> {
+  const exists = await memberBelongsToTeam(memberId, teamId);
+
+  if (!exists) {
+    throw new HttpError(400, "Assignee must belong to the same team");
+  }
+}

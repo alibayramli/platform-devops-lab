@@ -1,0 +1,236 @@
+@import "tailwindcss";
+@config "../tailwind.config.ts";
+
+:root {
+  --bg: #f4f5f7;
+  --bg-layer: #ffffff;
+  --text-primary: #111827;
+  --text-muted: #5b6473;
+  --card-bg: #ffffff;
+  --card-border: #d9dee8;
+  --surface-soft: #f8fafc;
+  --surface-border: #d9dee8;
+  --input-bg: #ffffff;
+  --input-border: #cdd5e1;
+  --input-text: #111827;
+  --input-placeholder: #8a95a6;
+  --focus-ring: rgba(15, 23, 42, 0.22);
+  --button-primary-bg: #0f172a;
+  --button-primary-hover: #1e293b;
+  --button-primary-text: #f8fafc;
+  --button-secondary-bg: #e5e7eb;
+  --button-secondary-hover: #d1d5db;
+  --button-secondary-text: #111827;
+  --table-head-bg: #f2f5f9;
+  --table-row-border: #e2e8f0;
+  --badge-neutral-bg: #eef2f7;
+  --badge-neutral-text: #334155;
+  --badge-mint-bg: #e8f6ef;
+  --badge-mint-text: #1e5d43;
+  --badge-sunrise-bg: #fff2e7;
+  --badge-sunrise-text: #8c4c24;
+  --badge-deep-bg: #e6edf8;
+  --badge-deep-text: #224269;
+  --badge-danger-bg: #feecee;
+  --badge-danger-text: #8c2f3f;
+  --shadow-panel: 0 10px 25px -20px rgba(15, 23, 42, 0.35);
+  --shadow-soft: 0 6px 18px -16px rgba(15, 23, 42, 0.28);
+}
+
+html[data-theme="dark"] {
+  --bg: #11151d;
+  --bg-layer: #161c27;
+  --text-primary: #e5e7eb;
+  --text-muted: #9ca8ba;
+  --card-bg: #161c27;
+  --card-border: #2c3644;
+  --surface-soft: #1a2230;
+  --surface-border: #2c3644;
+  --input-bg: #141b27;
+  --input-border: #344155;
+  --input-text: #e5e7eb;
+  --input-placeholder: #8190a8;
+  --focus-ring: rgba(148, 163, 184, 0.3);
+  --button-primary-bg: #e5e7eb;
+  --button-primary-hover: #cfd3db;
+  --button-primary-text: #111827;
+  --button-secondary-bg: #2f3a4a;
+  --button-secondary-hover: #3a4759;
+  --button-secondary-text: #e5e7eb;
+  --table-head-bg: #1d2634;
+  --table-row-border: #303c4f;
+  --badge-neutral-bg: #253043;
+  --badge-neutral-text: #d6deeb;
+  --badge-mint-bg: #214839;
+  --badge-mint-text: #c3f2dd;
+  --badge-sunrise-bg: #5d3c2d;
+  --badge-sunrise-text: #fddcc9;
+  --badge-deep-bg: #243a54;
+  --badge-deep-text: #d2e4fa;
+  --badge-danger-bg: #5e2d3a;
+  --badge-danger-text: #ffd3dc;
+  --shadow-panel: 0 10px 25px -20px rgba(2, 8, 23, 0.8);
+  --shadow-soft: 0 6px 18px -16px rgba(2, 8, 23, 0.75);
+}
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  body {
+    @apply min-h-screen font-sans antialiased;
+    color: var(--text-primary);
+    background-color: var(--bg);
+    background-image: linear-gradient(180deg, var(--bg-layer) 0%, var(--bg) 100%);
+    background-attachment: fixed;
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
+}
+
+@layer components {
+  .app-shell {
+    @apply relative min-h-screen;
+  }
+
+  .glass-panel {
+    @apply relative;
+  }
+
+  .section-title {
+    @apply font-display text-lg font-semibold tracking-tight;
+    color: var(--text-primary);
+  }
+
+  .section-subtitle {
+    @apply text-sm;
+    color: var(--text-muted);
+  }
+
+  .field-grid {
+    @apply grid gap-4;
+  }
+
+  .workspace-tabs {
+    @apply flex flex-wrap items-center gap-1 rounded-lg border p-1;
+    border-color: var(--surface-border);
+    background: var(--surface-soft);
+  }
+
+  .workspace-tabs-primary {
+    border-color: var(--surface-border);
+    background: var(--surface-soft);
+  }
+
+  .workspace-tabs-actions {
+    border-color: color-mix(in srgb, var(--surface-border) 80%, transparent);
+    background: color-mix(in srgb, var(--surface-soft) 72%, transparent);
+  }
+
+  .workspace-tab {
+    @apply inline-flex h-9 items-center gap-1.5 rounded-md border border-transparent px-3 text-sm font-semibold leading-none whitespace-nowrap transition-colors duration-150;
+    color: var(--text-muted);
+  }
+
+  .workspace-tab-action {
+    @apply font-medium;
+  }
+
+  .workspace-tab:hover {
+    background: var(--card-bg);
+    color: var(--text-primary);
+  }
+
+  .workspace-tab-active {
+    border-color: var(--card-border);
+    background: var(--card-bg);
+    color: var(--text-primary);
+  }
+
+  .surface {
+    @apply rounded-xl border;
+    border-color: var(--surface-border);
+    background: var(--surface-soft);
+    box-shadow: none;
+  }
+
+  .table-shell {
+    @apply overflow-x-auto rounded-xl border;
+    border-color: var(--surface-border);
+    background: var(--card-bg);
+  }
+
+  .interactive-chip {
+    @apply inline-flex h-10 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold leading-none whitespace-nowrap;
+    border: 1px solid var(--surface-border);
+    background: var(--surface-soft);
+    color: var(--text-muted);
+  }
+
+  .interactive-chip-strong {
+    border-color: var(--card-border);
+    background: var(--card-bg);
+    color: var(--text-primary);
+  }
+
+  .workspace-action-link {
+    @apply inline-flex h-9 items-center justify-center gap-2 rounded-lg border px-3.5 text-sm font-semibold transition-colors duration-150;
+    border-color: var(--input-border);
+    background: var(--input-bg);
+    color: var(--text-primary);
+  }
+
+  .workspace-action-link:hover {
+    background: var(--surface-soft);
+  }
+
+  .tab-group-label {
+    @apply px-1 text-[11px] font-semibold uppercase tracking-wider;
+    color: var(--text-muted);
+  }
+
+  .sync-indicator {
+    @apply inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-medium;
+    border-color: var(--surface-border);
+    background: var(--surface-soft);
+    color: var(--text-muted);
+  }
+}
+
+@layer utilities {
+  .theme-card {
+    background: var(--card-bg);
+    border-color: var(--card-border);
+    box-shadow: var(--shadow-panel);
+  }
+
+  .text-theme-primary {
+    color: var(--text-primary);
+  }
+
+  .text-theme-muted {
+    color: var(--text-muted);
+  }
+
+  .table-head {
+    background: var(--table-head-bg);
+    color: var(--text-muted);
+  }
+
+  .table-row {
+    border-color: var(--table-row-border);
+  }
+
+  .input-shell {
+    border-color: var(--input-border);
+    background: var(--input-bg);
+    color: var(--input-text);
+  }
+
+  .input-shell::placeholder {
+    color: var(--input-placeholder);
+  }
+}

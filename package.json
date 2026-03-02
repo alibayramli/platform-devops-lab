@@ -1,0 +1,21 @@
+{
+  "name": "platform-devops-lab",
+  "private": true,
+  "scripts": {
+    "prepare": "husky",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "npm --prefix backend run lint && npm --prefix frontend run lint",
+    "check": "npm --prefix backend run check && npm --prefix frontend run check",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "quality": "npm run format:check && npm run lint && npm run check"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.0",
+    "prettier": "^3.6.2"
+  },
+  "lint-staged": {
+    "*.{js,cjs,mjs,ts,tsx,css,json,md,yml,yaml}": "prettier --write"
+  }
+}

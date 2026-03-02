@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: devops_lab_postgres
+    environment:
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_password
+      POSTGRES_DB: app_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app_user -d app_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  api:
+    build:
+      context: ../backend
+      target: dev
+    container_name: devops_lab_api
+    environment:
+      PORT: 8080
+      DATABASE_URL: postgresql://app_user:app_password@postgres:5432/app_db
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "100"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../backend:/app
+      - /app/node_modules
+    command: sh -c "npm ci --no-audit --no-fund && npm run dev"
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ../frontend
+      target: dev
+      args:
+        VITE_API_URL: http://localhost:8080
+    container_name: devops_lab_frontend
+    environment:
+      VITE_API_URL: http://localhost:8080
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "100"
+    depends_on:
+      - api
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    command: sh -c "npm ci --no-audit --no-fund && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "3000:5173"
+
+volumes:
+  db_data:
+    name: infra_db_data
