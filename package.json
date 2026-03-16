@@ -1,13 +1,20 @@
 {
   "name": "platform-devops-lab",
   "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "prepare": "husky",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "npm --prefix backend run lint && npm --prefix frontend run lint",
-    "check": "npm --prefix backend run check && npm --prefix frontend run check",
-    "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "lint": "npm run lint -w backend && npm run lint -w frontend",
+    "check": "npm run check -w backend && npm run check -w frontend",
+    "build": "npm run build -w backend && npm run build -w frontend",
     "quality": "npm run format:check && npm run lint && npm run check"
   },
   "devDependencies": {

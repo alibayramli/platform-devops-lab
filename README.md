@@ -42,16 +42,22 @@ It is intentionally designed to be simple enough to learn from, but structured e
 ## Quick Start (Docker)
 
 1. Install prerequisites:
-   - Node.js 20+
+   - Node.js 24
    - Docker Desktop
-2. Start all services (development mode with hot reload):
+2. Align your local Node version:
+
+```bash
+nvm use
+```
+
+3. Start all services (development mode with hot reload):
 
 ```bash
 cd infra
 docker compose up --build
 ```
 
-3. Open:
+4. Open:
    - Frontend: http://localhost:3000
    - API health: http://localhost:8080/health
 
