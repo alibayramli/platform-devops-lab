@@ -1,6 +1,7 @@
 {
   "name": "platform-devops-lab",
   "private": true,
+  "packageManager": "npm@11.9.0",
   "workspaces": [
     "backend",
     "frontend"
