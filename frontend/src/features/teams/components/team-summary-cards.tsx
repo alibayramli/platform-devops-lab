@@ -1,5 +1,6 @@
+import { MoreHorizontal } from "lucide-react";
+
 import type { TeamSummary } from "../../../shared/types/api";
-import { cn } from "../../../shared/ui/cn";
 import {
   resolveSummaryMetricValue,
   summaryMetricDefinitions,
@@ -14,6 +15,10 @@ type TeamSummaryCardsProps = {
 
 export type { SummaryMetricId } from "../summary-metrics";
 
+function formatNumber(value: number): string {
+  return new Intl.NumberFormat("en-US").format(value);
+}
+
 export function TeamSummaryCards({ summary, onSelectMetric }: TeamSummaryCardsProps) {
   const metrics = summaryMetricOrder.map((metricId) => ({
     id: metricId,
@@ -23,48 +28,45 @@ export function TeamSummaryCards({ summary, onSelectMetric }: TeamSummaryCardsPr
   }));
 
   return (
-    <section className="grid grid-cols-2 gap-2 lg:grid-cols-3">
-      {metrics.map((metric) => (
-        <div key={metric.label}>
-          {onSelectMetric ? (
-            <button
-              type="button"
-              className="surface w-full p-3 text-left transition-colors duration-200 hover:border-[var(--button-primary-bg)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]"
-              onClick={() => onSelectMetric(metric.id)}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-theme-muted">
-                    {metric.label}
-                  </h3>
-                  <p className="mt-1 text-2xl font-bold leading-none text-theme-primary">
-                    {metric.value}
-                  </p>
-                </div>
-                <span className={cn("text-theme-muted")}>
-                  <metric.icon size={16} />
-                </span>
+    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {metrics.map((metric) => {
+        const content = (
+          <>
+            <div className="metric-card-top">
+              <div className="metric-card-label">
+                <span className="metric-card-dot" />
+                {metric.label}
               </div>
-            </button>
-          ) : (
-            <article className="surface p-3">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-theme-muted">
-                    {metric.label}
-                  </h3>
-                  <p className="mt-1 text-2xl font-bold leading-none text-theme-primary">
-                    {metric.value}
-                  </p>
-                </div>
-                <span className={cn("text-theme-muted")}>
-                  <metric.icon size={16} />
-                </span>
-              </div>
-            </article>
-          )}
-        </div>
-      ))}
+              <MoreHorizontal size={18} color="var(--text-soft)" />
+            </div>
+
+            <div className="metric-card-value-row">
+              <span className="metric-card-value">{formatNumber(metric.value)}</span>
+              <span className="ui-badge ui-badge-deep">
+                <metric.icon size={14} />
+                Live
+              </span>
+            </div>
+
+            <div className="metric-card-note">Open the detailed breakdown for this metric.</div>
+          </>
+        );
+
+        return onSelectMetric ? (
+          <button
+            key={metric.id}
+            type="button"
+            className="metric-card dashboard-panel w-full text-left"
+            onClick={() => onSelectMetric(metric.id)}
+          >
+            {content}
+          </button>
+        ) : (
+          <article key={metric.id} className="metric-card dashboard-panel">
+            {content}
+          </article>
+        );
+      })}
     </section>
   );
 }

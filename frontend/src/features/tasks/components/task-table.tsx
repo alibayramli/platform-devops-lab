@@ -1,3 +1,5 @@
+import { Check, MoreHorizontal } from "lucide-react";
+
 import { taskStatuses, type Task, type TaskStatus } from "../../../shared/types/api";
 import { Badge } from "../../../shared/ui/badge";
 import { Button } from "../../../shared/ui/button";
@@ -16,7 +18,31 @@ function prettyStatus(status: TaskStatus): string {
   return status.replace("_", " ");
 }
 
-function statusVariant(status: TaskStatus): "deep" | "sunrise" | "danger" | "mint" {
+function resolveInitials(value: string | null): string {
+  if (!value) {
+    return "NA";
+  }
+
+  return value
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function resolvePriorityVariant(priority: Task["priority"]): "danger" | "sunrise" | "deep" {
+  switch (priority) {
+    case "high":
+      return "danger";
+    case "medium":
+      return "sunrise";
+    case "low":
+      return "deep";
+  }
+}
+
+function resolveStatusVariant(status: TaskStatus): "deep" | "sunrise" | "danger" | "mint" {
   switch (status) {
     case "todo":
       return "deep";
@@ -38,13 +64,16 @@ export function TaskTable({
 }: TaskTableProps) {
   if (tasks.length === 0) {
     return (
-      <Card className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="section-title">Tasks</h2>
+      <Card className="table-panel">
+        <div className="table-toolbar">
+          <div>
+            <h2 className="section-title">Tasks</h2>
+            <p className="section-subtitle">Review and update the current backlog.</p>
+          </div>
           <Badge variant="neutral">{isLoading ? "Loading..." : "0 items"}</Badge>
         </div>
 
-        <div className="surface px-4 py-10 text-center text-sm text-theme-muted">
+        <div className="surface empty-state">
           {isLoading ? "Loading tasks..." : "No tasks matched the current filters."}
         </div>
       </Card>
@@ -52,42 +81,60 @@ export function TaskTable({
   }
 
   return (
-    <Card className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="section-title">Tasks</h2>
+    <Card className="table-panel">
+      <div className="table-toolbar">
+        <div>
+          <h2 className="section-title">Tasks</h2>
+          <p className="section-subtitle">Delivery board with status updates and task details.</p>
+        </div>
         <Badge variant="neutral">{isLoading ? "Refreshing..." : `${tasks.length} items`}</Badge>
       </div>
 
       <div className="table-shell">
-        <table className="w-full min-w-[900px] border-collapse text-sm">
-          <thead className="table-head text-xs uppercase tracking-wide">
+        <table className="dashboard-table">
+          <thead>
             <tr>
-              <th className="px-3 py-3 text-left font-semibold">Task</th>
-              <th className="px-3 py-3 text-left font-semibold">Status</th>
-              <th className="px-3 py-3 text-left font-semibold">Priority</th>
-              <th className="px-3 py-3 text-left font-semibold">Assignee</th>
-              <th className="px-3 py-3 text-left font-semibold">Due Date</th>
-              <th className="px-3 py-3 text-left font-semibold">Updated</th>
-              <th className="px-3 py-3 text-left font-semibold">Details</th>
+              <th aria-label="Selected" />
+              <th>Task</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Assignee</th>
+              <th>Due Date</th>
+              <th>Updated</th>
+              <th>Details</th>
             </tr>
           </thead>
-          <tbody className="bg-transparent">
-            {tasks.map((task) => (
-              <tr key={task.id} className="table-row border-t first:border-t-0">
-                <td className="px-3 py-3">
-                  <p className="font-semibold text-theme-primary">{task.title}</p>
-                  <p className="mt-1 text-xs text-theme-muted">
-                    {task.description ?? "No description"}
-                  </p>
+          <tbody>
+            {tasks.map((task, index) => (
+              <tr key={task.id}>
+                <td>
+                  <span className={`checkbox-pill ${index < 3 ? "is-checked" : ""}`}>
+                    <Check size={12} />
+                  </span>
                 </td>
-                <td className="w-[190px] px-3 py-3">
+                <td>
+                  <div className="row-identity">
+                    <span
+                      className="avatar"
+                      style={{ height: "2.45rem", width: "2.45rem", fontSize: ".78rem" }}
+                    >
+                      {String(task.id).padStart(2, "0")}
+                    </span>
+                    <div className="row-identity-text">
+                      <span className="row-title">{task.title}</span>
+                      <span className="row-subtitle">
+                        {task.description ?? "No description provided"}
+                      </span>
+                    </div>
+                  </div>
+                </td>
+                <td style={{ minWidth: "12rem" }}>
                   <Select
                     value={task.status}
                     disabled={isUpdatingTask}
                     onChange={(event) => {
                       void onUpdateStatus(task.id, event.target.value as TaskStatus);
                     }}
-                    className="h-9 bg-[var(--input-bg)]"
                   >
                     {taskStatuses.map((statusValue) => (
                       <option key={statusValue} value={statusValue}>
@@ -96,44 +143,52 @@ export function TaskTable({
                     ))}
                   </Select>
                 </td>
-                <td className="px-3 py-3">
-                  <Badge
-                    variant={
-                      task.priority === "high"
-                        ? "danger"
-                        : task.priority === "medium"
-                          ? "sunrise"
-                          : "neutral"
-                    }
-                  >
-                    {task.priority}
-                  </Badge>
+                <td>
+                  <Badge variant={resolvePriorityVariant(task.priority)}>{task.priority}</Badge>
                 </td>
-                <td className="px-3 py-3 text-theme-primary">
-                  {task.assigneeName ?? "Unassigned"}
-                </td>
-                <td className="px-3 py-3 text-theme-primary">{task.dueDate ?? "-"}</td>
-                <td className="px-3 py-3">
-                  <div className="space-y-1">
-                    <Badge variant={statusVariant(task.status)}>{prettyStatus(task.status)}</Badge>
-                    <p className="text-xs text-theme-muted">
-                      {new Date(task.updatedAt).toLocaleString()}
-                    </p>
+                <td>
+                  <div className="row-identity">
+                    <span
+                      className="avatar"
+                      style={{ height: "2.25rem", width: "2.25rem", fontSize: ".72rem" }}
+                    >
+                      {resolveInitials(task.assigneeName)}
+                    </span>
+                    <div className="row-identity-text">
+                      <span className="row-title">{task.assigneeName ?? "Unassigned"}</span>
+                      <span className="row-subtitle">
+                        {task.assigneeName ? "Task owner" : "Assign from backlog"}
+                      </span>
+                    </div>
                   </div>
                 </td>
-                <td className="px-3 py-3">
-                  {onOpenTask ? (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onOpenTask(task.id)}
-                    >
-                      Open
-                    </Button>
-                  ) : (
-                    <span className="text-xs text-theme-muted">-</span>
-                  )}
+                <td>{task.dueDate ?? "-"}</td>
+                <td>
+                  <div className="row-identity-text">
+                    <Badge variant={resolveStatusVariant(task.status)}>
+                      {prettyStatus(task.status)}
+                    </Badge>
+                    <span className="row-subtitle">
+                      {new Date(task.updatedAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </td>
+                <td>
+                  <div className="flex items-center gap-2">
+                    {onOpenTask ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onOpenTask(task.id)}
+                      >
+                        Open
+                      </Button>
+                    ) : null}
+                    <button type="button" className="table-icon-button" aria-label="Task actions">
+                      <MoreHorizontal size={16} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

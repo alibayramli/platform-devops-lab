@@ -43,18 +43,18 @@ export function TaskDetailRoute({
   }
 
   return (
-    <AnimatedRouteSection>
+    <AnimatedRouteSection className="dashboard-route-stack">
       {!task && isLoadingTasks ? (
         <motion.div variants={revealItem} transition={revealItemTransition}>
-          <Card>
-            <p className="text-sm text-theme-muted">Loading task details...</p>
+          <Card className="detail-card">
+            <p className="section-subtitle">Loading task details...</p>
           </Card>
         </motion.div>
       ) : null}
 
       {!task && !isLoadingTasks ? (
         <motion.div variants={revealItem} transition={revealItemTransition}>
-          <Card className="space-y-4">
+          <Card className="detail-card space-y-4">
             <div>
               <h2 className="section-title">Task Not Found</h2>
               <p className="section-subtitle mt-1">
@@ -77,7 +77,7 @@ export function TaskDetailRoute({
 
       {task ? (
         <motion.div variants={revealItem} transition={revealItemTransition}>
-          <Card className="space-y-4">
+          <Card className="detail-card space-y-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="section-title">Task #{task.id}</h2>
@@ -98,45 +98,31 @@ export function TaskDetailRoute({
               </Button>
             </div>
 
-            <div className="surface grid gap-3 rounded-2xl p-4 md:grid-cols-2">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-theme-muted">
-                  Title
-                </p>
-                <p className="mt-1 text-sm font-semibold text-theme-primary">{task.title}</p>
+            <div className="detail-stat-grid">
+              <div className="detail-stat surface">
+                <p className="detail-stat-label">Title</p>
+                <p className="detail-stat-value">{task.title}</p>
               </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-theme-muted">
-                  Assignee
-                </p>
-                <p className="mt-1 text-sm text-theme-primary">
-                  {task.assigneeName ?? "Unassigned"}
-                </p>
+              <div className="detail-stat surface">
+                <p className="detail-stat-label">Assignee</p>
+                <p className="detail-stat-value">{task.assigneeName ?? "Unassigned"}</p>
               </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-theme-muted">
-                  Priority
-                </p>
-                <p className="mt-1 text-sm text-theme-primary">{task.priority}</p>
+              <div className="detail-stat surface">
+                <p className="detail-stat-label">Priority</p>
+                <p className="detail-stat-value">{task.priority}</p>
               </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-theme-muted">
-                  Due Date
-                </p>
-                <p className="mt-1 text-sm text-theme-primary">{task.dueDate ?? "-"}</p>
+              <div className="detail-stat surface">
+                <p className="detail-stat-label">Due Date</p>
+                <p className="detail-stat-value">{task.dueDate ?? "-"}</p>
               </div>
-              <div className="md:col-span-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-theme-muted">
-                  Description
-                </p>
-                <p className="mt-1 text-sm text-theme-primary">
-                  {task.description ?? "No description"}
-                </p>
+              <div className="detail-stat surface md:col-span-2">
+                <p className="detail-stat-label">Description</p>
+                <p className="detail-stat-value">{task.description ?? "No description"}</p>
               </div>
             </div>
 
             <div className="max-w-[220px]">
-              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-theme-muted">
+              <p className="detail-stat-label" style={{ marginBottom: "0.55rem" }}>
                 Status
               </p>
               <Select

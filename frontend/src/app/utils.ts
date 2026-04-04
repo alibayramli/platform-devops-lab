@@ -19,7 +19,7 @@ export function readStoredTheme(): Theme {
     return raw;
   }
 
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return "light";
 }
 
 export function resolveActiveView(pathname: string): WorkspaceView {

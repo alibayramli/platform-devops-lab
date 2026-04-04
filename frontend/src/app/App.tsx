@@ -9,6 +9,7 @@ import { useCreateTeam, useTeamSummary, useTeams } from "../features/teams/hooks
 import type { TaskFilters, TaskStatus } from "../shared/types/api";
 import { Card } from "../shared/ui/card";
 import { selectedTeamStorageKey, selectedThemeStorageKey } from "./config";
+import { AppSidebar } from "./components/app-sidebar";
 import { DataSyncIndicator } from "./components/data-sync-indicator";
 import { WorkspaceHeader } from "./components/workspace-header";
 import { OverviewRoute } from "./routes/overview-route";
@@ -74,14 +75,6 @@ function App() {
       ? allTasksQuery.isFetching
       : false;
 
-  const visibleOverviewTasks = useMemo(() => {
-    return [...tasks]
-      .sort(
-        (left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime()
-      )
-      .slice(0, 8);
-  }, [tasks]);
-
   const activeTeam = useMemo(() => {
     if (typeof selectedTeamId !== "number") {
       return null;
@@ -110,10 +103,14 @@ function App() {
   }, [selectedTeamId, teams]);
 
   useEffect(() => {
+    if (teamsQuery.isLoading) {
+      return;
+    }
+
     if (!teams.length && !location.pathname.startsWith("/team")) {
       void navigate("/team/manage", { replace: true });
     }
-  }, [location.pathname, navigate, teams.length]);
+  }, [location.pathname, navigate, teams.length, teamsQuery.isLoading]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -169,160 +166,175 @@ function App() {
   }
 
   return (
-    <main className="app-shell pb-10">
-      <div className="relative mx-auto grid w-full max-w-[1080px] gap-4 px-4 py-5 md:px-6 lg:gap-5 lg:py-8">
-        <WorkspaceHeader
+    <main className="dashboard-shell">
+      <div className="dashboard-frame">
+        <AppSidebar
           pathname={location.pathname}
-          activeView={activeView}
           teams={teams}
           selectedTeamId={selectedTeamId}
-          summary={summaryQuery.data}
-          activeTeamName={activeTeam?.name ?? null}
+          members={members}
           theme={theme}
-          isLoadingInitialData={isLoadingInitialData}
-          isRefreshingWorkspaceData={isRefreshingWorkspaceData}
-          isRefreshingTasksData={isRefreshingVisibleTasks}
           onSelectTeam={handleSelectTeam}
           onToggleTheme={() =>
             setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"))
           }
         />
 
-        {isRefreshingVisibleTasks || isRefreshingWorkspaceData ? (
-          <DataSyncIndicator
-            label={
-              isRefreshingVisibleTasks ? "Refreshing tasks..." : "Refreshing workspace data..."
+        <section className="dashboard-main">
+          <WorkspaceHeader
+            pathname={location.pathname}
+            activeView={activeView}
+            teams={teams}
+            members={members}
+            selectedTeamId={selectedTeamId}
+            summary={summaryQuery.data}
+            activeTeamName={activeTeam?.name ?? null}
+            theme={theme}
+            isLoadingInitialData={isLoadingInitialData}
+            isRefreshingWorkspaceData={isRefreshingWorkspaceData}
+            isRefreshingTasksData={isRefreshingVisibleTasks}
+            onSelectTeam={handleSelectTeam}
+            onToggleTheme={() =>
+              setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"))
             }
           />
-        ) : null}
 
-        {teamsQuery.isError ||
-        membersQuery.isError ||
-        allTasksQuery.isError ||
-        filteredTasksQuery.isError ||
-        summaryQuery.isError ? (
-          <Card className="border-[var(--badge-danger-text)]/30 bg-[var(--badge-danger-bg)]">
-            <p className="text-sm font-semibold text-[var(--badge-danger-text)]">
-              {resolveErrorMessage([
-                teamsQuery.error,
-                membersQuery.error,
-                allTasksQuery.error,
-                filteredTasksQuery.error,
-                summaryQuery.error
-              ])}
-            </p>
-          </Card>
-        ) : null}
+          {isRefreshingVisibleTasks || isRefreshingWorkspaceData ? (
+            <DataSyncIndicator
+              label={
+                isRefreshingVisibleTasks ? "Refreshing tasks..." : "Refreshing workspace data..."
+              }
+            />
+          ) : null}
 
-        <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
-            <Route path="/" element={<Navigate to="/overview" replace />} />
-            <Route
-              path="/overview"
-              element={
-                <OverviewRoute
-                  summary={summaryQuery.data}
-                  activeTeamName={activeTeam?.name ?? null}
-                  tasks={visibleOverviewTasks}
-                  totalTaskCount={tasks.length}
-                  isLoadingInitialData={isLoadingInitialData}
-                  isRefreshingTasks={isRefreshingVisibleTasks}
-                  isUpdatingTask={updateTaskMutation.isPending}
-                  onSelectMetric={handleSelectMetric}
-                  onUpdateTaskStatus={handleUpdateTaskStatus}
-                  onOpenTask={handleOpenTask}
-                />
-              }
-            />
+          {teamsQuery.isError ||
+          membersQuery.isError ||
+          allTasksQuery.isError ||
+          filteredTasksQuery.isError ||
+          summaryQuery.isError ? (
+            <Card className="detail-card">
+              <p className="text-sm font-semibold text-[var(--danger)]">
+                {resolveErrorMessage([
+                  teamsQuery.error,
+                  membersQuery.error,
+                  allTasksQuery.error,
+                  filteredTasksQuery.error,
+                  summaryQuery.error
+                ])}
+              </p>
+            </Card>
+          ) : null}
 
-            <Route path="/tasks" element={<Navigate to="/tasks/backlog" replace />} />
-            <Route
-              path="/tasks/backlog"
-              element={
-                <TasksBacklogRoute
-                  members={members}
-                  filters={filters}
-                  tasks={filteredTasks}
-                  isLoadingTasks={filteredTasksQuery.isFetching}
-                  isUpdatingTask={updateTaskMutation.isPending}
-                  onChangeFilters={setFilters}
-                  onUpdateTaskStatus={handleUpdateTaskStatus}
-                  onOpenTask={handleOpenTask}
-                />
-              }
-            />
-            <Route
-              path="/tasks/new"
-              element={
-                <TasksNewRoute
-                  members={members}
-                  onCreateTask={handleCreateTask}
-                  isCreatingTask={createTaskMutation.isPending}
-                />
-              }
-            />
-            <Route
-              path="/tasks/:taskId"
-              element={
-                <TaskDetailRoute
-                  tasks={tasks}
-                  isLoadingTasks={allTasksQuery.isFetching}
-                  onUpdateTaskStatus={handleUpdateTaskStatus}
-                  isUpdatingTask={updateTaskMutation.isPending}
-                />
-              }
-            />
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              <Route path="/" element={<Navigate to="/overview" replace />} />
+              <Route
+                path="/overview"
+                element={
+                  <OverviewRoute
+                    summary={summaryQuery.data}
+                    activeTeamName={activeTeam?.name ?? null}
+                    tasks={tasks}
+                    members={members}
+                    totalTaskCount={tasks.length}
+                    isLoadingInitialData={isLoadingInitialData}
+                    isRefreshingTasks={isRefreshingVisibleTasks}
+                    onSelectMetric={handleSelectMetric}
+                    onUpdateTaskStatus={handleUpdateTaskStatus}
+                    onOpenTask={handleOpenTask}
+                  />
+                }
+              />
 
-            <Route path="/team" element={<Navigate to="/team/manage" replace />} />
-            <Route
-              path="/team/manage"
-              element={
-                <TeamManageRoute
-                  teams={teams}
-                  selectedTeamId={selectedTeamId}
-                  activeTeamName={activeTeam?.name ?? null}
-                  members={members}
-                  summary={summaryQuery.data}
-                  isLoadingTeams={teamsQuery.isFetching}
-                  isLoadingMembers={membersQuery.isFetching}
-                  isLoadingSummary={summaryQuery.isFetching}
-                  isCreatingTeam={createTeamMutation.isPending}
-                  isCreatingMember={createMemberMutation.isPending}
-                  onSelectTeam={handleSelectTeam}
-                  onCreateTeam={handleCreateTeam}
-                  onCreateMember={handleCreateMember}
-                  onSelectMetric={handleSelectMetric}
-                />
-              }
-            />
-            <Route
-              path="/team/snapshot"
-              element={
-                <TeamSnapshotRoute
-                  summary={summaryQuery.data}
-                  activeTeamName={activeTeam?.name ?? null}
-                  onSelectMetric={handleSelectMetric}
-                />
-              }
-            />
-            <Route
-              path="/team/snapshot/:metric"
-              element={
-                <TeamSnapshotDetailRoute
-                  activeTeamName={activeTeam?.name ?? null}
-                  members={members}
-                  tasks={tasks}
-                  isLoadingTasks={allTasksQuery.isFetching}
-                  onUpdateTaskStatus={handleUpdateTaskStatus}
-                  isUpdatingTask={updateTaskMutation.isPending}
-                  onOpenTask={handleOpenTask}
-                />
-              }
-            />
+              <Route path="/tasks" element={<Navigate to="/tasks/backlog" replace />} />
+              <Route
+                path="/tasks/backlog"
+                element={
+                  <TasksBacklogRoute
+                    members={members}
+                    filters={filters}
+                    tasks={filteredTasks}
+                    isLoadingTasks={filteredTasksQuery.isFetching}
+                    isUpdatingTask={updateTaskMutation.isPending}
+                    onChangeFilters={setFilters}
+                    onUpdateTaskStatus={handleUpdateTaskStatus}
+                    onOpenTask={handleOpenTask}
+                  />
+                }
+              />
+              <Route
+                path="/tasks/new"
+                element={
+                  <TasksNewRoute
+                    members={members}
+                    onCreateTask={handleCreateTask}
+                    isCreatingTask={createTaskMutation.isPending}
+                  />
+                }
+              />
+              <Route
+                path="/tasks/:taskId"
+                element={
+                  <TaskDetailRoute
+                    tasks={tasks}
+                    isLoadingTasks={allTasksQuery.isFetching}
+                    onUpdateTaskStatus={handleUpdateTaskStatus}
+                    isUpdatingTask={updateTaskMutation.isPending}
+                  />
+                }
+              />
 
-            <Route path="*" element={<Navigate to="/overview" replace />} />
-          </Routes>
-        </AnimatePresence>
+              <Route path="/team" element={<Navigate to="/team/manage" replace />} />
+              <Route
+                path="/team/manage"
+                element={
+                  <TeamManageRoute
+                    teams={teams}
+                    selectedTeamId={selectedTeamId}
+                    activeTeamName={activeTeam?.name ?? null}
+                    members={members}
+                    summary={summaryQuery.data}
+                    isLoadingTeams={teamsQuery.isFetching}
+                    isLoadingMembers={membersQuery.isFetching}
+                    isLoadingSummary={summaryQuery.isFetching}
+                    isCreatingTeam={createTeamMutation.isPending}
+                    isCreatingMember={createMemberMutation.isPending}
+                    onSelectTeam={handleSelectTeam}
+                    onCreateTeam={handleCreateTeam}
+                    onCreateMember={handleCreateMember}
+                    onSelectMetric={handleSelectMetric}
+                  />
+                }
+              />
+              <Route
+                path="/team/snapshot"
+                element={
+                  <TeamSnapshotRoute
+                    summary={summaryQuery.data}
+                    activeTeamName={activeTeam?.name ?? null}
+                    onSelectMetric={handleSelectMetric}
+                  />
+                }
+              />
+              <Route
+                path="/team/snapshot/:metric"
+                element={
+                  <TeamSnapshotDetailRoute
+                    activeTeamName={activeTeam?.name ?? null}
+                    members={members}
+                    tasks={tasks}
+                    isLoadingTasks={allTasksQuery.isFetching}
+                    onUpdateTaskStatus={handleUpdateTaskStatus}
+                    isUpdatingTask={updateTaskMutation.isPending}
+                    onOpenTask={handleOpenTask}
+                  />
+                }
+              />
+
+              <Route path="*" element={<Navigate to="/overview" replace />} />
+            </Routes>
+          </AnimatePresence>
+        </section>
       </div>
     </main>
   );

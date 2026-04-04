@@ -16,7 +16,7 @@ export function AnimatedRouteSection({
     <motion.section
       className={className}
       variants={revealGrid}
-      initial="hidden"
+      initial={false}
       animate="show"
       exit={routeExit}
     >

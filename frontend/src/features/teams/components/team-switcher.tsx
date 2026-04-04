@@ -48,26 +48,22 @@ export function TeamSwitcher({
   }
 
   return (
-    <Card className="space-y-4">
+    <Card className="stack-panel space-y-5">
       <div>
         <h2 className="section-title">Workspace Directory</h2>
-        <p className="section-subtitle">Switch workspaces or create a new one.</p>
+        <p className="section-subtitle">Switch workspaces or create a new one for the dashboard.</p>
       </div>
 
       {isLoadingTeams && teams.length === 0 ? (
-        <div className="surface p-4 text-sm text-theme-muted">Loading workspaces...</div>
+        <div className="surface empty-state">Loading workspaces...</div>
       ) : teams.length === 0 ? (
-        <div className="surface p-4 text-sm text-theme-muted">
+        <div className="surface empty-state">
           No workspaces yet. Create the first workspace below.
         </div>
       ) : (
-        <div className="space-y-2">
-          {isLoadingTeams ? (
-            <p className="px-1 text-xs font-medium text-theme-muted">
-              Refreshing workspace list...
-            </p>
-          ) : null}
-          <ul className="space-y-2.5">
+        <div className="space-y-3">
+          {isLoadingTeams ? <p className="section-subtitle">Refreshing workspace list...</p> : null}
+          <ul className="workspace-list">
             {teams.map((team) => {
               const isActive = team.id === selectedTeamId;
 
@@ -75,13 +71,13 @@ export function TeamSwitcher({
                 <li
                   key={team.id}
                   className={cn(
-                    "surface flex items-center justify-between gap-3 px-3 py-2.5",
-                    isActive && "border-[var(--button-primary-bg)]"
+                    "workspace-item surface",
+                    isActive && "border-[color:var(--accent)]"
                   )}
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-theme-primary">{team.name}</p>
-                    <p className="truncate text-xs text-theme-muted">
+                    <p className="row-title">{team.name}</p>
+                    <p className="row-subtitle">
                       {team.taskCount} tasks | {team.memberCount} members
                     </p>
                   </div>
@@ -131,7 +127,7 @@ export function TeamSwitcher({
           />
         </div>
 
-        <Button type="submit" variant="primary" disabled={isCreatingTeam}>
+        <Button type="submit" variant="primary" size="lg" disabled={isCreatingTeam}>
           <PlusCircle size={16} />
           {isCreatingTeam ? "Creating..." : "Create Workspace"}
         </Button>

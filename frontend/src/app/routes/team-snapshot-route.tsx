@@ -20,9 +20,9 @@ export function TeamSnapshotRoute({
   onSelectMetric
 }: TeamSnapshotRouteProps) {
   return (
-    <AnimatedRouteSection>
+    <AnimatedRouteSection className="dashboard-route-stack">
       <motion.div variants={revealItem} transition={revealItemTransition}>
-        <Card className="space-y-4">
+        <Card className="stack-panel space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="section-title">Snapshot Hub</h2>

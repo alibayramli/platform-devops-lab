@@ -26,14 +26,14 @@ type TasksNewRouteProps = {
 
 export function TasksNewRoute({ members, isCreatingTask, onCreateTask }: TasksNewRouteProps) {
   return (
-    <AnimatedRouteSection>
+    <AnimatedRouteSection className="dashboard-route-stack">
       <motion.div variants={revealItem} transition={revealItemTransition}>
-        <Card className="flex flex-wrap items-center justify-between gap-3">
+        <Card className="form-card flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="section-title">Create Task</h2>
             <p className="section-subtitle">Capture a new task and assign ownership.</p>
           </div>
-          <NavLink to="/tasks/backlog" className="workspace-action-link">
+          <NavLink to="/tasks/backlog" className="ui-button ui-button-outline ui-button-md">
             <ArrowLeft size={14} />
             Backlog
           </NavLink>

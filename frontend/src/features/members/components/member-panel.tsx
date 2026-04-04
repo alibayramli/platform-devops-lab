@@ -48,11 +48,11 @@ export function MemberPanel({
   }
 
   return (
-    <Card className="space-y-4">
+    <Card className="stack-panel space-y-5">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="section-title">Members</h2>
-          <p className="section-subtitle">Manage your active team roster.</p>
+          <p className="section-subtitle">Manage the active team roster and ownership roles.</p>
         </div>
         <Badge variant="neutral">
           {isLoadingMembers ? "Refreshing..." : `${members.length} total`}
@@ -79,14 +79,15 @@ export function MemberPanel({
           <Label>Email</Label>
           <Mail
             size={16}
-            className="pointer-events-none absolute left-3 top-[37px] text-theme-muted"
+            className="pointer-events-none absolute left-4 top-[42px]"
+            color="var(--text-soft)"
           />
           <Input
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="sam@example.com"
             maxLength={120}
-            className="pl-9"
+            className="pl-11"
           />
         </div>
 
@@ -101,23 +102,23 @@ export function MemberPanel({
           </Select>
         </div>
 
-        <Button type="submit" variant="primary" disabled={isCreatingMember}>
+        <Button type="submit" variant="primary" size="lg" disabled={isCreatingMember}>
           <UserPlus size={16} />
           {isCreatingMember ? "Adding..." : "Add Member"}
         </Button>
       </form>
 
       {isLoadingMembers && members.length === 0 ? (
-        <div className="surface p-4 text-sm text-theme-muted">Loading members...</div>
+        <div className="surface empty-state">Loading members...</div>
       ) : (
-        <ul className="space-y-2.5">
+        <ul className="member-list">
           {members.map((member) => (
-            <li
-              key={member.id}
-              className="surface flex items-center justify-between gap-3 px-3 py-2.5"
-            >
+            <li key={member.id} className="member-item surface">
               <div className="flex min-w-0 items-center gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--badge-deep-bg)] text-xs font-bold uppercase text-[var(--badge-deep-text)]">
+                <span
+                  className="avatar"
+                  style={{ height: "2.4rem", width: "2.4rem", fontSize: ".72rem" }}
+                >
                   {member.fullName
                     .split(" ")
                     .map((part) => part[0])
@@ -125,10 +126,8 @@ export function MemberPanel({
                     .slice(0, 2)}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-theme-primary">
-                    {member.fullName}
-                  </p>
-                  <p className="truncate text-xs text-theme-muted">{member.email}</p>
+                  <p className="row-title">{member.fullName}</p>
+                  <p className="row-subtitle">{member.email}</p>
                 </div>
               </div>
               <Badge variant={member.role === "lead" ? "sunrise" : "neutral"}>{member.role}</Badge>

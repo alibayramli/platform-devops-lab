@@ -69,10 +69,12 @@ export function TaskCreator({ members, onCreateTask, isCreatingTask }: TaskCreat
   }
 
   return (
-    <Card className="space-y-4">
+    <Card className="form-card space-y-5">
       <div>
         <h2 className="section-title">Task Details</h2>
-        <p className="section-subtitle">Add only what is needed. You can edit status later.</p>
+        <p className="section-subtitle">
+          Add the essentials first, then fine tune status and ownership from the backlog.
+        </p>
       </div>
 
       <form
@@ -153,18 +155,19 @@ export function TaskCreator({ members, onCreateTask, isCreatingTask }: TaskCreat
             <Label>Due Date</Label>
             <CalendarClock
               size={16}
-              className="pointer-events-none absolute left-3 top-[37px] text-theme-muted"
+              className="pointer-events-none absolute left-4 top-[42px]"
+              color="var(--text-soft)"
             />
             <Input
               type="date"
               value={dueDate}
               onChange={(event) => setDueDate(event.target.value)}
-              className="pl-9"
+              className="pl-11"
             />
           </div>
         </div>
 
-        <Button type="submit" variant="primary" disabled={isCreatingTask}>
+        <Button type="submit" variant="primary" size="lg" disabled={isCreatingTask}>
           {isCreatingTask ? "Saving..." : "Create Task"}
         </Button>
       </form>

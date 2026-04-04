@@ -61,14 +61,14 @@ export function TeamSnapshotDetailRoute({
   }
 
   return (
-    <AnimatedRouteSection>
+    <AnimatedRouteSection className="dashboard-route-stack">
       <motion.div variants={revealItem} transition={revealItemTransition}>
-        <Card className="space-y-4">
+        <Card className="detail-card space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="section-title flex items-center gap-2">
                 {metricDefinition ? (
-                  <metricDefinition.icon size={16} className="text-theme-muted" />
+                  <metricDefinition.icon size={16} color="var(--text-soft)" />
                 ) : null}
                 {metricConfig.title}
               </h2>
@@ -94,28 +94,21 @@ export function TeamSnapshotDetailRoute({
 
       {metric === "members" ? (
         <motion.div variants={revealItem} transition={revealItemTransition}>
-          <Card className="space-y-3">
+          <Card className="stack-panel space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="section-title text-base">Member Directory</h3>
               <Badge variant="neutral">{members.length} members</Badge>
             </div>
 
             {members.length === 0 ? (
-              <div className="surface p-4 text-sm text-theme-muted">
-                No members found for this workspace.
-              </div>
+              <div className="surface empty-state">No members found for this workspace.</div>
             ) : (
-              <ul className="space-y-2.5">
+              <ul className="member-list">
                 {members.map((member) => (
-                  <li
-                    key={member.id}
-                    className="surface flex items-center justify-between gap-3 rounded-xl px-3 py-2.5"
-                  >
+                  <li key={member.id} className="member-item surface">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-theme-primary">
-                        {member.fullName}
-                      </p>
-                      <p className="truncate text-xs text-theme-muted">{member.email}</p>
+                      <p className="row-title">{member.fullName}</p>
+                      <p className="row-subtitle">{member.email}</p>
                     </div>
                     <Badge variant={member.role === "lead" ? "sunrise" : "neutral"}>
                       {member.role}

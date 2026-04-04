@@ -31,9 +31,9 @@ export function TasksBacklogRoute({
   onOpenTask
 }: TasksBacklogRouteProps) {
   return (
-    <AnimatedRouteSection>
+    <AnimatedRouteSection className="dashboard-route-stack">
       <motion.div variants={revealItem} transition={revealItemTransition}>
-        <Card className="space-y-3">
+        <Card className="form-card space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="section-title">Task Backlog</h2>
@@ -41,7 +41,7 @@ export function TasksBacklogRoute({
                 Refine and update tasks by status, priority, owner, and text search.
               </p>
             </div>
-            <NavLink to="/tasks/new" className="workspace-action-link">
+            <NavLink to="/tasks/new" className="ui-button ui-button-primary ui-button-md">
               <Plus size={15} />
               New Task
             </NavLink>

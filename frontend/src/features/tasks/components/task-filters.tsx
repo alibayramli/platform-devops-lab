@@ -19,7 +19,7 @@ export function TaskFiltersBar({ members, filters, onChangeFilters }: TaskFilter
   );
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <div>
         <Label>Status</Label>
         <Select
@@ -85,7 +85,8 @@ export function TaskFiltersBar({ members, filters, onChangeFilters }: TaskFilter
         <div className="relative">
           <Search
             size={16}
-            className="pointer-events-none absolute left-3 top-3 text-theme-muted"
+            className="pointer-events-none absolute left-4 top-4"
+            color="var(--text-soft)"
           />
           <Input
             value={filters.search ?? ""}
@@ -97,7 +98,7 @@ export function TaskFiltersBar({ members, filters, onChangeFilters }: TaskFilter
             }
             placeholder="Search title or description"
             maxLength={120}
-            className="pl-9"
+            className="pl-11"
           />
         </div>
       </div>
