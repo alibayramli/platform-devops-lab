@@ -2,17 +2,34 @@ import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 
-import { useCreateMember, useMembers } from "../features/members/hooks/use-members";
-import { useCreateTask, useTasks, useUpdateTask } from "../features/tasks/hooks/use-tasks";
+import {
+  useCreateMember,
+  useDeleteMember,
+  useMembers,
+  useUpdateMember
+} from "../features/members/hooks/use-members";
+import {
+  useCreateTask,
+  useDeleteTask,
+  useTasks,
+  useUpdateTask
+} from "../features/tasks/hooks/use-tasks";
 import type { SummaryMetricId } from "../features/teams/components/team-summary-cards";
-import { useCreateTeam, useTeamSummary, useTeams } from "../features/teams/hooks/use-teams";
-import type { TaskFilters, TaskStatus } from "../shared/types/api";
+import {
+  useCreateTeam,
+  useDeleteTeam,
+  useTeamSummary,
+  useTeams,
+  useUpdateTeam
+} from "../features/teams/hooks/use-teams";
+import type { MemberRole, TaskFilters, TaskPriority, TaskStatus } from "../shared/types/api";
 import { Card } from "../shared/ui/card";
 import { selectedTeamStorageKey, selectedThemeStorageKey } from "./config";
 import { AppSidebar } from "./components/app-sidebar";
 import { DataSyncIndicator } from "./components/data-sync-indicator";
 import { WorkspaceHeader } from "./components/workspace-header";
 import { OverviewRoute } from "./routes/overview-route";
+import { OverviewPerformanceRoute } from "./routes/overview-performance-route";
 import { TaskDetailRoute } from "./routes/task-detail-route";
 import { TasksBacklogRoute } from "./routes/tasks-backlog-route";
 import { TasksNewRoute } from "./routes/tasks-new-route";
@@ -38,6 +55,8 @@ function App() {
 
   const teamsQuery = useTeams();
   const createTeamMutation = useCreateTeam();
+  const updateTeamMutation = useUpdateTeam();
+  const deleteTeamMutation = useDeleteTeam();
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(() => readStoredTeamId());
   const [theme, setTheme] = useState<Theme>(() => readStoredTheme());
   const [filters, setFilters] = useState<TaskFilters>({});
@@ -49,8 +68,11 @@ function App() {
   const filteredTasksQuery = useTasks(selectedTeamId, filters);
 
   const createMemberMutation = useCreateMember(selectedTeamId);
+  const updateMemberMutation = useUpdateMember(selectedTeamId);
+  const deleteMemberMutation = useDeleteMember(selectedTeamId);
   const createTaskMutation = useCreateTask(selectedTeamId);
   const updateTaskMutation = useUpdateTask(selectedTeamId);
+  const deleteTaskMutation = useDeleteTask(selectedTeamId);
 
   const teams = useMemo(() => teamsQuery.data ?? [], [teamsQuery.data]);
   const members = useMemo(() => membersQuery.data ?? [], [membersQuery.data]);
@@ -107,8 +129,12 @@ function App() {
       return;
     }
 
-    if (!teams.length && !location.pathname.startsWith("/team")) {
-      void navigate("/team/manage", { replace: true });
+    if (
+      !teams.length &&
+      !location.pathname.startsWith("/team") &&
+      !location.pathname.startsWith("/teams")
+    ) {
+      void navigate("/teams", { replace: true });
     }
   }, [location.pathname, navigate, teams.length, teamsQuery.isLoading]);
 
@@ -133,6 +159,28 @@ function App() {
     await createMemberMutation.mutateAsync(input);
   }
 
+  async function handleUpdateMember(
+    memberId: number,
+    input: { fullName?: string; email?: string; role?: MemberRole }
+  ) {
+    if (typeof selectedTeamId !== "number") {
+      return;
+    }
+
+    await updateMemberMutation.mutateAsync({
+      memberId,
+      patch: input
+    });
+  }
+
+  async function handleDeleteMember(memberId: number) {
+    if (typeof selectedTeamId !== "number") {
+      return;
+    }
+
+    await deleteMemberMutation.mutateAsync(memberId);
+  }
+
   async function handleCreateTask(input: Parameters<typeof createTaskMutation.mutateAsync>[0]) {
     if (typeof selectedTeamId !== "number") {
       return;
@@ -142,19 +190,70 @@ function App() {
   }
 
   async function handleUpdateTaskStatus(taskId: number, status: TaskStatus) {
+    await handleUpdateTask(taskId, { status });
+  }
+
+  async function handleUpdateTask(
+    taskId: number,
+    patch: Partial<{
+      title: string;
+      description: string | null;
+      status: TaskStatus;
+      priority: TaskPriority;
+      dueDate: string | null;
+      assigneeId: number | null;
+    }>
+  ) {
     if (typeof selectedTeamId !== "number") {
       return;
     }
 
     await updateTaskMutation.mutateAsync({
       taskId,
-      patch: { status }
+      patch
     });
+  }
+
+  async function handleDeleteTask(taskId: number) {
+    if (typeof selectedTeamId !== "number") {
+      return;
+    }
+
+    await deleteTaskMutation.mutateAsync(taskId);
+  }
+
+  async function handleUpdateTeam(
+    teamId: number,
+    input: { name?: string; description?: string | null }
+  ) {
+    await updateTeamMutation.mutateAsync({
+      teamId,
+      patch: input
+    });
+  }
+
+  async function handleDeleteTeam(teamId: number) {
+    await deleteTeamMutation.mutateAsync(teamId);
+
+    const remainingTeams = teams.filter((team) => team.id !== teamId);
+    const nextTeamId = selectedTeamId === teamId ? (remainingTeams[0]?.id ?? null) : selectedTeamId;
+
+    setSelectedTeamId(nextTeamId);
+
+    if (typeof nextTeamId === "number") {
+      window.localStorage.setItem(selectedTeamStorageKey, String(nextTeamId));
+    } else {
+      window.localStorage.removeItem(selectedTeamStorageKey);
+    }
   }
 
   function handleSelectTeam(teamId: number) {
     setSelectedTeamId(teamId);
     window.localStorage.setItem(selectedTeamStorageKey, String(teamId));
+  }
+
+  function handleToggleTheme() {
+    setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
   }
 
   function handleSelectMetric(metricId: SummaryMetricId) {
@@ -173,30 +272,21 @@ function App() {
           teams={teams}
           selectedTeamId={selectedTeamId}
           members={members}
-          theme={theme}
           onSelectTeam={handleSelectTeam}
-          onToggleTheme={() =>
-            setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"))
-          }
         />
 
         <section className="dashboard-main">
           <WorkspaceHeader
             pathname={location.pathname}
             activeView={activeView}
-            teams={teams}
             members={members}
-            selectedTeamId={selectedTeamId}
             summary={summaryQuery.data}
             activeTeamName={activeTeam?.name ?? null}
             theme={theme}
             isLoadingInitialData={isLoadingInitialData}
             isRefreshingWorkspaceData={isRefreshingWorkspaceData}
             isRefreshingTasksData={isRefreshingVisibleTasks}
-            onSelectTeam={handleSelectTeam}
-            onToggleTheme={() =>
-              setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"))
-            }
+            onToggleTheme={handleToggleTheme}
           />
 
           {isRefreshingVisibleTasks || isRefreshingWorkspaceData ? (
@@ -228,6 +318,7 @@ function App() {
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
               <Route path="/" element={<Navigate to="/overview" replace />} />
+              <Route path="/team/manage" element={<Navigate to="/teams" replace />} />
               <Route
                 path="/overview"
                 element={
@@ -235,12 +326,20 @@ function App() {
                     summary={summaryQuery.data}
                     activeTeamName={activeTeam?.name ?? null}
                     tasks={tasks}
-                    members={members}
                     totalTaskCount={tasks.length}
+                    onSelectMetric={handleSelectMetric}
+                  />
+                }
+              />
+              <Route
+                path="/overview/performance"
+                element={
+                  <OverviewPerformanceRoute
+                    activeTeamName={activeTeam?.name ?? null}
+                    members={members}
+                    tasks={tasks}
                     isLoadingInitialData={isLoadingInitialData}
                     isRefreshingTasks={isRefreshingVisibleTasks}
-                    onSelectMetric={handleSelectMetric}
-                    onUpdateTaskStatus={handleUpdateTaskStatus}
                     onOpenTask={handleOpenTask}
                   />
                 }
@@ -256,8 +355,10 @@ function App() {
                     tasks={filteredTasks}
                     isLoadingTasks={filteredTasksQuery.isFetching}
                     isUpdatingTask={updateTaskMutation.isPending}
+                    isDeletingTask={deleteTaskMutation.isPending}
                     onChangeFilters={setFilters}
                     onUpdateTaskStatus={handleUpdateTaskStatus}
+                    onDeleteTask={handleDeleteTask}
                     onOpenTask={handleOpenTask}
                   />
                 }
@@ -277,32 +378,38 @@ function App() {
                 element={
                   <TaskDetailRoute
                     tasks={tasks}
+                    members={members}
                     isLoadingTasks={allTasksQuery.isFetching}
-                    onUpdateTaskStatus={handleUpdateTaskStatus}
+                    onUpdateTask={handleUpdateTask}
+                    onDeleteTask={handleDeleteTask}
                     isUpdatingTask={updateTaskMutation.isPending}
+                    isDeletingTask={deleteTaskMutation.isPending}
                   />
                 }
               />
 
-              <Route path="/team" element={<Navigate to="/team/manage" replace />} />
+              <Route path="/team" element={<Navigate to="/teams" replace />} />
               <Route
-                path="/team/manage"
+                path="/teams"
                 element={
                   <TeamManageRoute
                     teams={teams}
                     selectedTeamId={selectedTeamId}
                     activeTeamName={activeTeam?.name ?? null}
                     members={members}
-                    summary={summaryQuery.data}
-                    isLoadingTeams={teamsQuery.isFetching}
                     isLoadingMembers={membersQuery.isFetching}
-                    isLoadingSummary={summaryQuery.isFetching}
                     isCreatingTeam={createTeamMutation.isPending}
+                    isUpdatingTeam={updateTeamMutation.isPending}
+                    isDeletingTeam={deleteTeamMutation.isPending}
                     isCreatingMember={createMemberMutation.isPending}
-                    onSelectTeam={handleSelectTeam}
+                    isUpdatingMember={updateMemberMutation.isPending}
+                    isDeletingMember={deleteMemberMutation.isPending}
                     onCreateTeam={handleCreateTeam}
+                    onUpdateTeam={handleUpdateTeam}
+                    onDeleteTeam={handleDeleteTeam}
                     onCreateMember={handleCreateMember}
-                    onSelectMetric={handleSelectMetric}
+                    onUpdateMember={handleUpdateMember}
+                    onDeleteMember={handleDeleteMember}
                   />
                 }
               />
@@ -326,6 +433,8 @@ function App() {
                     isLoadingTasks={allTasksQuery.isFetching}
                     onUpdateTaskStatus={handleUpdateTaskStatus}
                     isUpdatingTask={updateTaskMutation.isPending}
+                    onDeleteTask={handleDeleteTask}
+                    isDeletingTask={deleteTaskMutation.isPending}
                     onOpenTask={handleOpenTask}
                   />
                 }

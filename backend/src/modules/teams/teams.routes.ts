@@ -2,8 +2,14 @@ import { Router } from "express";
 
 import { asyncHandler } from "../../shared/async-handler.js";
 import { parseId } from "../../shared/request-parsers.js";
-import { createNewTeam, getSummaryByTeamId, getTeams } from "./teams.service.js";
-import { createTeamSchema } from "./teams.types.js";
+import {
+  createNewTeam,
+  deleteExistingTeam,
+  getSummaryByTeamId,
+  getTeams,
+  updateExistingTeam
+} from "./teams.service.js";
+import { createTeamSchema, updateTeamSchema } from "./teams.types.js";
 
 export const teamsRouter = Router();
 
@@ -21,6 +27,25 @@ teamsRouter.post(
     const input = createTeamSchema.parse(req.body);
     const team = await createNewTeam(input);
     res.status(201).json(team);
+  })
+);
+
+teamsRouter.patch(
+  "/teams/:teamId",
+  asyncHandler(async (req, res) => {
+    const teamId = parseId(req.params.teamId, "teamId");
+    const input = updateTeamSchema.parse(req.body);
+    const team = await updateExistingTeam(teamId, input);
+    res.json(team);
+  })
+);
+
+teamsRouter.delete(
+  "/teams/:teamId",
+  asyncHandler(async (req, res) => {
+    const teamId = parseId(req.params.teamId, "teamId");
+    await deleteExistingTeam(teamId);
+    res.status(204).send();
   })
 );
 

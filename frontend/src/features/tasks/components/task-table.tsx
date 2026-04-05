@@ -1,4 +1,4 @@
-import { Check, MoreHorizontal } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 import { taskStatuses, type Task, type TaskStatus } from "../../../shared/types/api";
 import { Badge } from "../../../shared/ui/badge";
@@ -11,6 +11,8 @@ type TaskTableProps = {
   isLoading?: boolean;
   onUpdateStatus: (taskId: number, status: TaskStatus) => Promise<void>;
   isUpdatingTask: boolean;
+  onDeleteTask: (taskId: number) => Promise<void>;
+  isDeletingTask: boolean;
   onOpenTask?: (taskId: number) => void;
 };
 
@@ -60,8 +62,20 @@ export function TaskTable({
   isLoading = false,
   onUpdateStatus,
   isUpdatingTask,
+  onDeleteTask,
+  isDeletingTask,
   onOpenTask
 }: TaskTableProps) {
+  async function handleDelete(task: Task) {
+    const confirmed = window.confirm(`Delete "${task.title}"?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    await onDeleteTask(task.id);
+  }
+
   if (tasks.length === 0) {
     return (
       <Card className="table-panel">
@@ -90,28 +104,22 @@ export function TaskTable({
         <Badge variant="neutral">{isLoading ? "Refreshing..." : `${tasks.length} items`}</Badge>
       </div>
 
-      <div className="table-shell">
+      <div className="table-shell table-shell-records">
         <table className="dashboard-table">
           <thead>
             <tr>
-              <th aria-label="Selected" />
               <th>Task</th>
               <th>Status</th>
               <th>Priority</th>
               <th>Assignee</th>
               <th>Due Date</th>
               <th>Updated</th>
-              <th>Details</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {tasks.map((task, index) => (
+            {tasks.map((task) => (
               <tr key={task.id}>
-                <td>
-                  <span className={`checkbox-pill ${index < 3 ? "is-checked" : ""}`}>
-                    <Check size={12} />
-                  </span>
-                </td>
                 <td>
                   <div className="row-identity">
                     <span
@@ -157,7 +165,7 @@ export function TaskTable({
                     <div className="row-identity-text">
                       <span className="row-title">{task.assigneeName ?? "Unassigned"}</span>
                       <span className="row-subtitle">
-                        {task.assigneeName ? "Task owner" : "Assign from backlog"}
+                        {task.assigneeName ? "Task owner" : "Assign from task details"}
                       </span>
                     </div>
                   </div>
@@ -174,20 +182,31 @@ export function TaskTable({
                   </div>
                 </td>
                 <td>
-                  <div className="flex items-center gap-2">
+                  <div className="table-row-actions">
                     {onOpenTask ? (
                       <Button
                         type="button"
                         size="sm"
                         variant="outline"
-                        onClick={() => onOpenTask(task.id)}
+                        onClick={() => {
+                          onOpenTask(task.id);
+                        }}
                       >
                         Open
                       </Button>
                     ) : null}
-                    <button type="button" className="table-icon-button" aria-label="Task actions">
-                      <MoreHorizontal size={16} />
-                    </button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={isDeletingTask}
+                      onClick={() => {
+                        void handleDelete(task);
+                      }}
+                    >
+                      <Trash2 size={14} />
+                      {isDeletingTask ? "Deleting..." : "Delete"}
+                    </Button>
                   </div>
                 </td>
               </tr>

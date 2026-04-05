@@ -184,3 +184,7 @@ export async function updateTaskById(
     assigneeName: await resolveAssigneeName(updated.assigneeId)
   };
 }
+
+export async function deleteTaskById(taskId: number, teamId: number): Promise<void> {
+  await db.delete(tasks).where(and(eq(tasks.id, taskId), eq(tasks.teamId, teamId)));
+}

@@ -14,3 +14,20 @@ export function createMember(
     body: input
   });
 }
+
+export function updateMember(
+  teamId: number,
+  memberId: number,
+  input: Partial<{ fullName: string; email: string; role: MemberRole }>
+): Promise<Member> {
+  return apiRequest<Member>(`/api/teams/${teamId}/members/${memberId}`, {
+    method: "PATCH",
+    body: input
+  });
+}
+
+export function deleteMember(teamId: number, memberId: number): Promise<void> {
+  return apiRequest<void>(`/api/teams/${teamId}/members/${memberId}`, {
+    method: "DELETE"
+  });
+}

@@ -3,6 +3,7 @@ import { assertMemberInTeam } from "../members/members.service.js";
 import { assertTeamExists } from "../teams/teams.service.js";
 import {
   createTaskForTeam,
+  deleteTaskById,
   listTasksByTeamId,
   taskExists,
   updateTaskById
@@ -49,4 +50,10 @@ export async function updateTask(
   }
 
   return updateTaskById(taskId, teamId, input);
+}
+
+export async function deleteTask(teamId: number, taskId: number): Promise<void> {
+  await assertTeamExists(teamId);
+  await assertTaskExists(teamId, taskId);
+  await deleteTaskById(taskId, teamId);
 }

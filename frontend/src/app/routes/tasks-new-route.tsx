@@ -1,9 +1,8 @@
 import { motion } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
-import { NavLink } from "react-router-dom";
 
 import { TaskCreator } from "../../features/tasks/components/task-creator";
 import type { Member } from "../../shared/types/api";
+import { Badge } from "../../shared/ui/badge";
 import { Card } from "../../shared/ui/card";
 import { AnimatedRouteSection } from "../components/animated-route-section";
 import { revealItem, revealItemTransition } from "../motion";
@@ -33,10 +32,7 @@ export function TasksNewRoute({ members, isCreatingTask, onCreateTask }: TasksNe
             <h2 className="section-title">Create Task</h2>
             <p className="section-subtitle">Capture a new task and assign ownership.</p>
           </div>
-          <NavLink to="/tasks/backlog" className="ui-button ui-button-outline ui-button-md">
-            <ArrowLeft size={14} />
-            Backlog
-          </NavLink>
+          <Badge variant="neutral">{members.length} assignees</Badge>
         </Card>
       </motion.div>
 

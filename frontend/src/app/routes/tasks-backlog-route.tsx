@@ -1,10 +1,9 @@
 import { motion } from "framer-motion";
-import { NavLink } from "react-router-dom";
-import { Plus } from "lucide-react";
 
 import { TaskFiltersBar } from "../../features/tasks/components/task-filters";
 import { TaskTable } from "../../features/tasks/components/task-table";
 import type { Member, Task, TaskFilters, TaskStatus } from "../../shared/types/api";
+import { Badge } from "../../shared/ui/badge";
 import { Card } from "../../shared/ui/card";
 import { AnimatedRouteSection } from "../components/animated-route-section";
 import { revealItem, revealItemTransition } from "../motion";
@@ -15,8 +14,10 @@ type TasksBacklogRouteProps = {
   tasks: Task[];
   isLoadingTasks: boolean;
   isUpdatingTask: boolean;
+  isDeletingTask: boolean;
   onChangeFilters: (nextFilters: TaskFilters) => void;
   onUpdateTaskStatus: (taskId: number, status: TaskStatus) => Promise<void>;
+  onDeleteTask: (taskId: number) => Promise<void>;
   onOpenTask: (taskId: number) => void;
 };
 
@@ -26,8 +27,10 @@ export function TasksBacklogRoute({
   tasks,
   isLoadingTasks,
   isUpdatingTask,
+  isDeletingTask,
   onChangeFilters,
   onUpdateTaskStatus,
+  onDeleteTask,
   onOpenTask
 }: TasksBacklogRouteProps) {
   return (
@@ -41,10 +44,7 @@ export function TasksBacklogRoute({
                 Refine and update tasks by status, priority, owner, and text search.
               </p>
             </div>
-            <NavLink to="/tasks/new" className="ui-button ui-button-primary ui-button-md">
-              <Plus size={15} />
-              New Task
-            </NavLink>
+            <Badge variant="neutral">{tasks.length} tasks</Badge>
           </div>
           <TaskFiltersBar members={members} filters={filters} onChangeFilters={onChangeFilters} />
         </Card>
@@ -56,6 +56,8 @@ export function TasksBacklogRoute({
           isLoading={isLoadingTasks}
           onUpdateStatus={onUpdateTaskStatus}
           isUpdatingTask={isUpdatingTask}
+          onDeleteTask={onDeleteTask}
+          isDeletingTask={isDeletingTask}
           onOpenTask={onOpenTask}
         />
       </motion.div>

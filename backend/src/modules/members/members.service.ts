@@ -2,10 +2,12 @@ import { HttpError } from "../../shared/http-error.js";
 import { assertTeamExists } from "../teams/teams.service.js";
 import {
   createMemberForTeam,
+  deleteMemberById,
   listMembersByTeamId,
-  memberBelongsToTeam
+  memberBelongsToTeam,
+  updateMemberById
 } from "./members.repository.js";
-import type { CreateMemberInput, Member } from "./members.types.js";
+import type { CreateMemberInput, Member, UpdateMemberInput } from "./members.types.js";
 
 export async function getMembersByTeamId(teamId: number): Promise<Member[]> {
   await assertTeamExists(teamId);
@@ -24,6 +26,31 @@ export async function createMember(teamId: number, input: CreateMemberInput): Pr
 
     throw error;
   }
+}
+
+export async function updateMember(
+  teamId: number,
+  memberId: number,
+  input: UpdateMemberInput
+): Promise<Member> {
+  await assertTeamExists(teamId);
+  await assertMemberInTeam(teamId, memberId);
+
+  try {
+    return await updateMemberById(memberId, teamId, input);
+  } catch (error) {
+    if (typeof error === "object" && error !== null && "code" in error && error.code === "23505") {
+      throw new HttpError(409, "A member with this email already exists in the team");
+    }
+
+    throw error;
+  }
+}
+
+export async function deleteMember(teamId: number, memberId: number): Promise<void> {
+  await assertTeamExists(teamId);
+  await assertMemberInTeam(teamId, memberId);
+  await deleteMemberById(memberId, teamId);
 }
 
 export async function assertMemberInTeam(teamId: number, memberId: number): Promise<void> {

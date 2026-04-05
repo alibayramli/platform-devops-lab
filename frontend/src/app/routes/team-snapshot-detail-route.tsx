@@ -21,6 +21,8 @@ type TeamSnapshotDetailRouteProps = {
   isLoadingTasks: boolean;
   onUpdateTaskStatus: (taskId: number, status: TaskStatus) => Promise<void>;
   isUpdatingTask: boolean;
+  onDeleteTask: (taskId: number) => Promise<void>;
+  isDeletingTask: boolean;
   onOpenTask: (taskId: number) => void;
 };
 
@@ -31,6 +33,8 @@ export function TeamSnapshotDetailRoute({
   isLoadingTasks,
   onUpdateTaskStatus,
   isUpdatingTask,
+  onDeleteTask,
+  isDeletingTask,
   onOpenTask
 }: TeamSnapshotDetailRouteProps) {
   const navigate = useNavigate();
@@ -126,6 +130,8 @@ export function TeamSnapshotDetailRoute({
             isLoading={isLoadingTasks}
             onUpdateStatus={onUpdateTaskStatus}
             isUpdatingTask={isUpdatingTask}
+            onDeleteTask={onDeleteTask}
+            isDeletingTask={isDeletingTask}
             onOpenTask={onOpenTask}
           />
         </motion.div>

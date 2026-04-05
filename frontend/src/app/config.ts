@@ -23,9 +23,9 @@ export const viewRoutes: WorkspaceView[] = [
   },
   {
     id: "team",
-    label: "Workspace",
-    path: "/team/manage",
-    description: "Workspace setup, members, and snapshot routes.",
+    label: "Teams",
+    path: "/teams",
+    description: "Global team management, workspace setup, and member access.",
     icon: UsersRound
   }
 ];

@@ -1,5 +1,3 @@
-import { MoreHorizontal } from "lucide-react";
-
 import type { TeamSummary } from "../../../shared/types/api";
 import {
   resolveSummaryMetricValue,
@@ -37,7 +35,6 @@ export function TeamSummaryCards({ summary, onSelectMetric }: TeamSummaryCardsPr
                 <span className="metric-card-dot" />
                 {metric.label}
               </div>
-              <MoreHorizontal size={18} color="var(--text-soft)" />
             </div>
 
             <div className="metric-card-value-row">

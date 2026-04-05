@@ -1,32 +1,64 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Save, Trash2 } from "lucide-react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 
-import { taskStatuses, type Task, type TaskStatus } from "../../shared/types/api";
+import {
+  taskPriorities,
+  taskStatuses,
+  type Member,
+  type Task,
+  type TaskPriority,
+  type TaskStatus
+} from "../../shared/types/api";
 import { Button } from "../../shared/ui/button";
 import { Card } from "../../shared/ui/card";
+import { Input } from "../../shared/ui/input";
+import { Label } from "../../shared/ui/label";
 import { Select } from "../../shared/ui/select";
+import { Textarea } from "../../shared/ui/textarea";
 import { AnimatedRouteSection } from "../components/animated-route-section";
 import { revealItem, revealItemTransition } from "../motion";
 
 type TaskDetailRouteProps = {
   tasks: Task[];
+  members: Member[];
   isLoadingTasks: boolean;
-  onUpdateTaskStatus: (taskId: number, status: TaskStatus) => Promise<void>;
+  onUpdateTask: (
+    taskId: number,
+    patch: Partial<{
+      title: string;
+      description: string | null;
+      status: TaskStatus;
+      priority: TaskPriority;
+      dueDate: string | null;
+      assigneeId: number | null;
+    }>
+  ) => Promise<void>;
+  onDeleteTask: (taskId: number) => Promise<void>;
   isUpdatingTask: boolean;
+  isDeletingTask: boolean;
 };
 
 export function TaskDetailRoute({
   tasks,
+  members,
   isLoadingTasks,
-  onUpdateTaskStatus,
-  isUpdatingTask
+  onUpdateTask,
+  onDeleteTask,
+  isUpdatingTask,
+  isDeletingTask
 }: TaskDetailRouteProps) {
   const navigate = useNavigate();
   const params = useParams();
   const rawTaskId = params.taskId ?? "";
   const taskId = Number(rawTaskId);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [status, setStatus] = useState<TaskStatus>("todo");
+  const [priority, setPriority] = useState<TaskPriority>("medium");
+  const [assigneeId, setAssigneeId] = useState<number | "">("");
+  const [dueDate, setDueDate] = useState("");
 
   const isValidTaskId = Number.isInteger(taskId) && taskId > 0;
 
@@ -38,8 +70,57 @@ export function TaskDetailRoute({
     return tasks.find((entry) => entry.id === taskId) ?? null;
   }, [isValidTaskId, taskId, tasks]);
 
+  useEffect(() => {
+    if (!task) {
+      return;
+    }
+
+    setTitle(task.title);
+    setDescription(task.description ?? "");
+    setStatus(task.status);
+    setPriority(task.priority);
+    setAssigneeId(task.assigneeId ?? "");
+    setDueDate(task.dueDate ?? "");
+  }, [task]);
+
   if (!isValidTaskId) {
     return <Navigate to="/tasks/backlog" replace />;
+  }
+
+  async function handleSave() {
+    if (!task) {
+      return;
+    }
+
+    const cleanTitle = title.trim();
+
+    if (!cleanTitle) {
+      return;
+    }
+
+    await onUpdateTask(task.id, {
+      title: cleanTitle,
+      description: description.trim() || null,
+      status,
+      priority,
+      dueDate: dueDate || null,
+      assigneeId: typeof assigneeId === "number" ? assigneeId : null
+    });
+  }
+
+  async function handleDelete() {
+    if (!task) {
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete "${task.title}"?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    await onDeleteTask(task.id);
+    void navigate("/tasks/backlog");
   }
 
   return (
@@ -98,46 +179,115 @@ export function TaskDetailRoute({
               </Button>
             </div>
 
-            <div className="detail-stat-grid">
-              <div className="detail-stat surface">
-                <p className="detail-stat-label">Title</p>
-                <p className="detail-stat-value">{task.title}</p>
-              </div>
-              <div className="detail-stat surface">
-                <p className="detail-stat-label">Assignee</p>
-                <p className="detail-stat-value">{task.assigneeName ?? "Unassigned"}</p>
-              </div>
-              <div className="detail-stat surface">
-                <p className="detail-stat-label">Priority</p>
-                <p className="detail-stat-value">{task.priority}</p>
-              </div>
-              <div className="detail-stat surface">
-                <p className="detail-stat-label">Due Date</p>
-                <p className="detail-stat-value">{task.dueDate ?? "-"}</p>
-              </div>
-              <div className="detail-stat surface md:col-span-2">
-                <p className="detail-stat-label">Description</p>
-                <p className="detail-stat-value">{task.description ?? "No description"}</p>
-              </div>
-            </div>
+            <div className="task-creator-form">
+              <div className="task-creator-main">
+                <div>
+                  <Label>Title</Label>
+                  <Input
+                    value={title}
+                    onChange={(event) => setTitle(event.target.value)}
+                    placeholder="Task title"
+                    maxLength={140}
+                  />
+                </div>
 
-            <div className="max-w-[220px]">
-              <p className="detail-stat-label" style={{ marginBottom: "0.55rem" }}>
-                Status
-              </p>
-              <Select
-                value={task.status}
-                disabled={isUpdatingTask}
-                onChange={(event) => {
-                  void onUpdateTaskStatus(task.id, event.target.value as TaskStatus);
-                }}
-              >
-                {taskStatuses.map((statusValue) => (
-                  <option key={statusValue} value={statusValue}>
-                    {statusValue}
-                  </option>
-                ))}
-              </Select>
+                <div>
+                  <Label>Description</Label>
+                  <Textarea
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    placeholder="Task notes, blockers, and context"
+                    maxLength={800}
+                    className="task-creator-description"
+                  />
+                </div>
+              </div>
+
+              <div className="task-creator-side">
+                <div className="task-creator-meta-grid">
+                  <div>
+                    <Label>Status</Label>
+                    <Select
+                      value={status}
+                      onChange={(event) => setStatus(event.target.value as TaskStatus)}
+                    >
+                      {taskStatuses.map((statusValue) => (
+                        <option key={statusValue} value={statusValue}>
+                          {statusValue}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Priority</Label>
+                    <Select
+                      value={priority}
+                      onChange={(event) => setPriority(event.target.value as TaskPriority)}
+                    >
+                      {taskPriorities.map((priorityValue) => (
+                        <option key={priorityValue} value={priorityValue}>
+                          {priorityValue}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Assignee</Label>
+                    <Select
+                      value={assigneeId}
+                      onChange={(event) =>
+                        setAssigneeId(event.target.value ? Number(event.target.value) : "")
+                      }
+                    >
+                      <option value="">Unassigned</option>
+                      {members.map((member) => (
+                        <option key={member.id} value={member.id}>
+                          {member.fullName}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Due Date</Label>
+                    <Input
+                      type="date"
+                      value={dueDate}
+                      onChange={(event) => setDueDate(event.target.value)}
+                      className="ui-input-date"
+                    />
+                  </div>
+                </div>
+
+                <div className="panel-actions">
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="lg"
+                    disabled={isUpdatingTask}
+                    onClick={() => {
+                      void handleSave();
+                    }}
+                  >
+                    <Save size={16} />
+                    {isUpdatingTask ? "Saving..." : "Save Changes"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    disabled={isDeletingTask}
+                    onClick={() => {
+                      void handleDelete();
+                    }}
+                  >
+                    <Trash2 size={16} />
+                    {isDeletingTask ? "Deleting..." : "Delete Task"}
+                  </Button>
+                </div>
+              </div>
             </div>
           </Card>
         </motion.div>

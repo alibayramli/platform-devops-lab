@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { CalendarClock } from "lucide-react";
 
 import {
   taskPriorities,
@@ -69,7 +68,7 @@ export function TaskCreator({ members, onCreateTask, isCreatingTask }: TaskCreat
   }
 
   return (
-    <Card className="form-card space-y-5">
+    <Card className="form-card task-creator-card space-y-5">
       <div>
         <h2 className="section-title">Task Details</h2>
         <p className="section-subtitle">
@@ -78,98 +77,102 @@ export function TaskCreator({ members, onCreateTask, isCreatingTask }: TaskCreat
       </div>
 
       <form
-        className="field-grid"
+        className="task-creator-form"
         onSubmit={(event) => {
           void handleSubmit(event);
         }}
       >
-        <div>
-          <Label>Title</Label>
-          <Input
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder="Prepare sprint retrospective agenda"
-            maxLength={140}
-          />
-        </div>
-
-        <div>
-          <Label>Description</Label>
-          <Textarea
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            placeholder="Optional context and acceptance criteria"
-            maxLength={800}
-          />
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="task-creator-main">
           <div>
-            <Label>Status</Label>
-            <Select
-              value={status}
-              onChange={(event) => setStatus(event.target.value as TaskStatus)}
-            >
-              {taskStatuses.map((statusValue) => (
-                <option key={statusValue} value={statusValue}>
-                  {statusValue}
-                </option>
-              ))}
-            </Select>
-          </div>
-
-          <div>
-            <Label>Priority</Label>
-            <Select
-              value={priority}
-              onChange={(event) => setPriority(event.target.value as TaskPriority)}
-            >
-              {taskPriorities.map((priorityValue) => (
-                <option key={priorityValue} value={priorityValue}>
-                  {priorityValue}
-                </option>
-              ))}
-            </Select>
-          </div>
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-2">
-          <div>
-            <Label>Assignee</Label>
-            <Select
-              value={assigneeId}
-              onChange={(event) =>
-                setAssigneeId(event.target.value ? Number(event.target.value) : "")
-              }
-            >
-              <option value="">Unassigned</option>
-              {members.map((member) => (
-                <option key={member.id} value={member.id}>
-                  {member.fullName}
-                </option>
-              ))}
-            </Select>
-          </div>
-
-          <div className="relative">
-            <Label>Due Date</Label>
-            <CalendarClock
-              size={16}
-              className="pointer-events-none absolute left-4 top-[42px]"
-              color="var(--text-soft)"
-            />
+            <Label>Title</Label>
             <Input
-              type="date"
-              value={dueDate}
-              onChange={(event) => setDueDate(event.target.value)}
-              className="pl-11"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="Prepare sprint retrospective agenda"
+              maxLength={140}
+            />
+          </div>
+
+          <div>
+            <Label>Description</Label>
+            <Textarea
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="Notes, blockers, and acceptance criteria"
+              maxLength={800}
+              className="task-creator-description"
             />
           </div>
         </div>
 
-        <Button type="submit" variant="primary" size="lg" disabled={isCreatingTask}>
-          {isCreatingTask ? "Saving..." : "Create Task"}
-        </Button>
+        <div className="task-creator-side">
+          <div className="task-creator-meta-grid">
+            <div>
+              <Label>Status</Label>
+              <Select
+                value={status}
+                onChange={(event) => setStatus(event.target.value as TaskStatus)}
+              >
+                {taskStatuses.map((statusValue) => (
+                  <option key={statusValue} value={statusValue}>
+                    {statusValue}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            <div>
+              <Label>Priority</Label>
+              <Select
+                value={priority}
+                onChange={(event) => setPriority(event.target.value as TaskPriority)}
+              >
+                {taskPriorities.map((priorityValue) => (
+                  <option key={priorityValue} value={priorityValue}>
+                    {priorityValue}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            <div>
+              <Label>Assignee</Label>
+              <Select
+                value={assigneeId}
+                onChange={(event) =>
+                  setAssigneeId(event.target.value ? Number(event.target.value) : "")
+                }
+              >
+                <option value="">Unassigned</option>
+                {members.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.fullName}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            <div>
+              <Label>Due Date</Label>
+              <Input
+                type="date"
+                value={dueDate}
+                onChange={(event) => setDueDate(event.target.value)}
+                className="ui-input-date"
+              />
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            disabled={isCreatingTask}
+            className="task-creator-submit"
+          >
+            {isCreatingTask ? "Saving..." : "Create Task"}
+          </Button>
+        </div>
       </form>
     </Card>
   );

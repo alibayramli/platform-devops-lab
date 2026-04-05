@@ -1,5 +1,3 @@
-import { Search } from "lucide-react";
-
 import type { Member, TaskFilters, TaskPriority, TaskStatus } from "../../../shared/types/api";
 import { taskPriorities, taskStatuses } from "../../../shared/types/api";
 import { Button } from "../../../shared/ui/button";
@@ -82,25 +80,17 @@ export function TaskFiltersBar({ members, filters, onChangeFilters }: TaskFilter
 
       <div className="sm:col-span-2 xl:col-span-1">
         <Label>Search</Label>
-        <div className="relative">
-          <Search
-            size={16}
-            className="pointer-events-none absolute left-4 top-4"
-            color="var(--text-soft)"
-          />
-          <Input
-            value={filters.search ?? ""}
-            onChange={(event) =>
-              onChangeFilters({
-                ...filters,
-                search: event.target.value || undefined
-              })
-            }
-            placeholder="Search title or description"
-            maxLength={120}
-            className="pl-11"
-          />
-        </div>
+        <Input
+          value={filters.search ?? ""}
+          onChange={(event) =>
+            onChangeFilters({
+              ...filters,
+              search: event.target.value || undefined
+            })
+          }
+          placeholder="Search title or description"
+          maxLength={120}
+        />
       </div>
 
       <div className="sm:col-span-2 xl:col-span-4">

@@ -19,7 +19,7 @@ export function readStoredTheme(): Theme {
     return raw;
   }
 
-  return "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 export function resolveActiveView(pathname: string): WorkspaceView {
@@ -27,7 +27,7 @@ export function resolveActiveView(pathname: string): WorkspaceView {
     return viewRoutes[1];
   }
 
-  if (pathname.startsWith("/team")) {
+  if (pathname.startsWith("/team") || pathname.startsWith("/teams")) {
     return viewRoutes[2];
   }
 
@@ -35,6 +35,10 @@ export function resolveActiveView(pathname: string): WorkspaceView {
 }
 
 export function describeRoute(pathname: string): string {
+  if (pathname === "/overview/performance") {
+    return "Route: team performance";
+  }
+
   if (pathname === "/tasks/new") {
     return "Route: task creation";
   }
@@ -51,7 +55,7 @@ export function describeRoute(pathname: string): string {
     return "Route: backlog board";
   }
 
-  if (pathname === "/team/manage") {
+  if (pathname === "/team/manage" || pathname === "/teams") {
     return "Route: team management";
   }
 

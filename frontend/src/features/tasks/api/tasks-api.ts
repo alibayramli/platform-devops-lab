@@ -63,3 +63,9 @@ export function updateTask(
     body: input
   });
 }
+
+export function deleteTask(teamId: number, taskId: number): Promise<void> {
+  return apiRequest<void>(`/api/teams/${teamId}/tasks/${taskId}`, {
+    method: "DELETE"
+  });
+}
