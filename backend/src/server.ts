@@ -1,8 +1,19 @@
 import { env } from "./config/env.js";
+import { closePool } from "./db/pool.js";
 import { logger } from "./observability/logger.js";
 import { initTracing, shutdownTracing } from "./observability/tracing.js";
 
 let shuttingDown = false;
+
+async function shutdownResources(): Promise<void> {
+  const results = await Promise.allSettled([shutdownTracing(), closePool()]);
+
+  for (const result of results) {
+    if (result.status === "rejected") {
+      logger.error({ err: result.reason }, "Failed to shut down application resource");
+    }
+  }
+}
 
 async function start(): Promise<void> {
   initTracing();
@@ -31,13 +42,9 @@ async function start(): Promise<void> {
         logger.error({ err: closeError }, "Failed to close HTTP server cleanly");
       }
 
-      void shutdownTracing()
-        .catch((shutdownError) => {
-          logger.error({ err: shutdownError }, "Failed to shut down tracing");
-        })
-        .finally(() => {
-          process.exit(closeError ? 1 : 0);
-        });
+      void shutdownResources().finally(() => {
+        process.exit(closeError ? 1 : 0);
+      });
     });
   };
 
@@ -52,5 +59,5 @@ async function start(): Promise<void> {
 
 start().catch((error) => {
   logger.fatal({ err: error }, "Failed to start API");
-  void shutdownTracing().finally(() => process.exit(1));
+  void shutdownResources().finally(() => process.exit(1));
 });

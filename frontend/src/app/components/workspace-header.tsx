@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { MoonStar, SunMedium } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
+import { getInitials } from "../../shared/lib/format";
 import type { Member, TeamSummary } from "../../shared/types/api";
 import { revealItem } from "../motion";
 import type { Theme, WorkspaceView } from "../types";
@@ -57,15 +58,6 @@ function resolveTabs(pathname: string) {
   }
 
   return [];
-}
-
-function resolveInitials(value: string): string {
-  return value
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 }
 
 function resolveTitle(pathname: string, activeView: WorkspaceView): string {
@@ -136,7 +128,7 @@ export function WorkspaceHeader({
               <div className="avatar-stack" aria-hidden="true">
                 {visibleMembers.map((member) => (
                   <span key={member.id} className="avatar-stack-item">
-                    {resolveInitials(member.fullName)}
+                    {getInitials(member.fullName)}
                   </span>
                 ))}
                 {hiddenMembers > 0 ? (

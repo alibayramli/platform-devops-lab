@@ -1,5 +1,6 @@
 import { apiRequest } from "../../../shared/api/http-client";
-import type { Task, TaskFilters, TaskPriority, TaskStatus } from "../../../shared/types/api";
+import type { Task, TaskFilters } from "../../../shared/types/api";
+import type { CreateTaskInput, UpdateTaskInput } from "../types";
 
 function toSearchParams(filters: TaskFilters): string {
   const params = new URLSearchParams();
@@ -28,36 +29,14 @@ export function getTasks(teamId: number, filters: TaskFilters): Promise<Task[]> 
   return apiRequest<Task[]>(`/api/teams/${teamId}/tasks${toSearchParams(filters)}`);
 }
 
-export function createTask(
-  teamId: number,
-  input: {
-    title: string;
-    description?: string;
-    status: TaskStatus;
-    priority: TaskPriority;
-    dueDate?: string;
-    assigneeId?: number | null;
-    createdByMemberId?: number | null;
-  }
-): Promise<Task> {
+export function createTask(teamId: number, input: CreateTaskInput): Promise<Task> {
   return apiRequest<Task>(`/api/teams/${teamId}/tasks`, {
     method: "POST",
     body: input
   });
 }
 
-export function updateTask(
-  teamId: number,
-  taskId: number,
-  input: Partial<{
-    title: string;
-    description: string | null;
-    status: TaskStatus;
-    priority: TaskPriority;
-    dueDate: string | null;
-    assigneeId: number | null;
-  }>
-): Promise<Task> {
+export function updateTask(teamId: number, taskId: number, input: UpdateTaskInput): Promise<Task> {
   return apiRequest<Task>(`/api/teams/${teamId}/tasks/${taskId}`, {
     method: "PATCH",
     body: input

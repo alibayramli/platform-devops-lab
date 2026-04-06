@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 
+import { formatNumber, getInitials } from "../../shared/lib/format";
 import type { Member, Task } from "../../shared/types/api";
 import { Button } from "../../shared/ui/button";
 import { Badge } from "../../shared/ui/badge";
@@ -18,7 +19,7 @@ type OverviewPerformanceRouteProps = {
 };
 
 type PerformanceRow = {
-  id: string;
+  key: string;
   name: string;
   subtitle: string;
   initials: string;
@@ -30,19 +31,6 @@ type PerformanceRow = {
   role: string;
   health: "excellent" | "good" | "watch";
 };
-
-function resolveInitials(value: string): string {
-  return value
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat("en-US").format(value);
-}
 
 function formatPercent(value: number): string {
   return `${Math.round(value)}%`;
@@ -76,10 +64,10 @@ function buildPerformanceRows(members: Member[], tasks: Task[]): PerformanceRow[
             : "watch";
 
     return {
-      id: String(member.id).padStart(5, "0"),
+      key: `member-${member.id}`,
       name: member.fullName,
       subtitle: member.email,
-      initials: resolveInitials(member.fullName),
+      initials: getInitials(member.fullName),
       primaryTaskId: assignedTasks[0]?.id ?? null,
       assigned: assignedTasks.length,
       completed,
@@ -94,7 +82,7 @@ function buildPerformanceRows(members: Member[], tasks: Task[]): PerformanceRow[
 
   if (unassignedTasks.length > 0) {
     rows.push({
-      id: "POOL",
+      key: "unassigned-queue",
       name: "Unassigned Queue",
       subtitle: "Tasks waiting for ownership",
       initials: "UQ",
@@ -192,7 +180,6 @@ export function OverviewPerformanceRoute({
               <table className="dashboard-table">
                 <thead>
                   <tr>
-                    <th>ID</th>
                     <th>Name</th>
                     <th>Assigned</th>
                     <th>Completed</th>
@@ -205,8 +192,7 @@ export function OverviewPerformanceRoute({
                 </thead>
                 <tbody>
                   {performanceRows.map((row) => (
-                    <tr key={`${row.id}-${row.name}`}>
-                      <td className="row-number">{row.id}</td>
+                    <tr key={row.key}>
                       <td>
                         <div className="row-identity">
                           <span
@@ -241,7 +227,13 @@ export function OverviewPerformanceRoute({
                             type="button"
                             size="sm"
                             variant="outline"
-                            onClick={() => onOpenTask(row.primaryTaskId!)}
+                            onClick={() => {
+                              const taskId = row.primaryTaskId;
+
+                              if (typeof taskId === "number") {
+                                onOpenTask(taskId);
+                              }
+                            }}
                           >
                             Open
                           </Button>

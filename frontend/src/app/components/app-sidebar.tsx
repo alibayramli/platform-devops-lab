@@ -1,6 +1,7 @@
 import { FolderKanban, LayoutDashboard, ListChecks, NotebookTabs, UsersRound } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
+import { getInitials } from "../../shared/lib/format";
 import type { Member, TeamListItem } from "../../shared/types/api";
 
 type AppSidebarProps = {
@@ -39,15 +40,6 @@ const mainLinks = [
   }
 ];
 
-function resolveInitials(value: string): string {
-  return value
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
 function resolveProfile(members: Member[]) {
   const profile = members[0];
 
@@ -60,7 +52,7 @@ function resolveProfile(members: Member[]) {
   }
 
   return {
-    initials: resolveInitials(profile.fullName),
+    initials: getInitials(profile.fullName, "PL"),
     name: profile.fullName,
     email: profile.email
   };
@@ -134,7 +126,7 @@ export function AppSidebar({
                   onClick={() => onSelectTeam(team.id)}
                 >
                   <span className={`sidebar-project-swatch ${swatchVariant}`} aria-hidden="true">
-                    {resolveInitials(team.name)}
+                    {getInitials(team.name)}
                   </span>
                   <span className="sidebar-project-copy">
                     <span className="sidebar-project-active">
@@ -142,7 +134,7 @@ export function AppSidebar({
                       {isActive ? <span className="sidebar-project-badge">Active</span> : null}
                     </span>
                     <span className="sidebar-project-meta">
-                      {team.taskCount} tasks • {team.memberCount} teammates
+                      {`${team.taskCount} tasks • ${team.memberCount} teammates`}
                     </span>
                   </span>
                 </button>

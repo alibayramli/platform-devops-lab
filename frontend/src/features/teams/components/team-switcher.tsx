@@ -7,6 +7,7 @@ import { Button } from "../../../shared/ui/button";
 import { Card } from "../../../shared/ui/card";
 import { Input } from "../../../shared/ui/input";
 import { Label } from "../../../shared/ui/label";
+import { useConfirmationDialog } from "../../../shared/ui/use-confirmation-dialog";
 
 type TeamSwitcherProps = {
   activeTeam: TeamListItem | null;
@@ -30,6 +31,7 @@ export function TeamSwitcher({
   isUpdatingTeam,
   isDeletingTeam
 }: TeamSwitcherProps) {
+  const confirm = useConfirmationDialog();
   const [mode, setMode] = useState<"create" | "edit">(activeTeam ? "edit" : "create");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -94,9 +96,12 @@ export function TeamSwitcher({
       return;
     }
 
-    const confirmed = window.confirm(
-      `Delete "${activeTeam.name}"? This will also remove its members and tasks.`
-    );
+    const confirmed = await confirm({
+      title: "Delete workspace?",
+      description: `This will permanently delete "${activeTeam.name}" and remove all of its members and tasks.`,
+      confirmLabel: "Delete Workspace",
+      tone: "danger"
+    });
 
     if (!confirmed) {
       return;

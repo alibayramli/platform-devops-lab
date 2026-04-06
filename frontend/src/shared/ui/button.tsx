@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import type { ButtonHTMLAttributes } from "react";
+import { forwardRef, type ButtonHTMLAttributes } from "react";
 
 import { cn } from "./cn";
 
@@ -7,6 +7,7 @@ const buttonVariants = cva("ui-button focus-visible:outline-none disabled:pointe
   variants: {
     variant: {
       primary: "ui-button-primary",
+      danger: "ui-button-danger",
       sunrise: "ui-button-sunrise",
       ghost: "ui-button-ghost",
       outline: "ui-button-outline",
@@ -26,6 +27,12 @@ const buttonVariants = cva("ui-button focus-visible:outline-none disabled:pointe
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & VariantProps<typeof buttonVariants>;
 
-export function Button({ className, variant, size, ...props }: ButtonProps) {
-  return <button className={cn(buttonVariants({ variant, size }), className)} {...props} />;
-}
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, ...props }, ref) => {
+    return (
+      <button ref={ref} className={cn(buttonVariants({ variant, size }), className)} {...props} />
+    );
+  }
+);
+
+Button.displayName = "Button";

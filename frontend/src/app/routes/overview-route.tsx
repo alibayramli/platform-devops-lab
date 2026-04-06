@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 
 import type { SummaryMetricId } from "../../features/teams/components/team-summary-cards";
+import { formatNumber } from "../../shared/lib/format";
 import type { Task, TeamSummary } from "../../shared/types/api";
 import { Card } from "../../shared/ui/card";
 import { AnimatedRouteSection } from "../components/animated-route-section";
@@ -32,12 +33,7 @@ type MetricCard = {
 };
 
 const fallbackActivity = [38, 64, 52, 56, 72, 61, 53, 42, 64, 39, 66, 48, 41, 47, 55, 63, 51, 58];
-
 const fallbackChart = [720, 2200, 1800, 1920, 2550, 2060, 1780, 1520, 2220];
-
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat("en-US").format(value);
-}
 
 function formatPercent(value: number): string {
   return `${Math.round(value)}%`;
@@ -324,10 +320,9 @@ export function OverviewRoute({
                             >
                               <strong>{month.label}</strong>
                               <span>
-                                {formatNumber(month.completedHeight)} done ·{" "}
-                                {formatPercent(
+                                {`${formatNumber(month.completedHeight)} done · ${formatPercent(
                                   (month.completedHeight / Math.max(month.totalHeight, 1)) * 100
-                                )}
+                                )}`}
                               </span>
                             </div>
                           ) : null}

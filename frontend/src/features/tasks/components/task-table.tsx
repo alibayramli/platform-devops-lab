@@ -1,10 +1,17 @@
 import { Trash2 } from "lucide-react";
 
 import { taskStatuses, type Task, type TaskStatus } from "../../../shared/types/api";
+import { formatShortDate, getInitials } from "../../../shared/lib/format";
 import { Badge } from "../../../shared/ui/badge";
 import { Button } from "../../../shared/ui/button";
 import { Card } from "../../../shared/ui/card";
 import { Select } from "../../../shared/ui/select";
+import { useConfirmationDialog } from "../../../shared/ui/use-confirmation-dialog";
+import {
+  formatTaskStatusLabel,
+  resolveTaskPriorityVariant,
+  resolveTaskStatusVariant
+} from "../utils";
 
 type TaskTableProps = {
   tasks: Task[];
@@ -16,47 +23,6 @@ type TaskTableProps = {
   onOpenTask?: (taskId: number) => void;
 };
 
-function prettyStatus(status: TaskStatus): string {
-  return status.replace("_", " ");
-}
-
-function resolveInitials(value: string | null): string {
-  if (!value) {
-    return "NA";
-  }
-
-  return value
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
-function resolvePriorityVariant(priority: Task["priority"]): "danger" | "sunrise" | "deep" {
-  switch (priority) {
-    case "high":
-      return "danger";
-    case "medium":
-      return "sunrise";
-    case "low":
-      return "deep";
-  }
-}
-
-function resolveStatusVariant(status: TaskStatus): "deep" | "sunrise" | "danger" | "mint" {
-  switch (status) {
-    case "todo":
-      return "deep";
-    case "in_progress":
-      return "sunrise";
-    case "blocked":
-      return "danger";
-    case "done":
-      return "mint";
-  }
-}
-
 export function TaskTable({
   tasks,
   isLoading = false,
@@ -66,8 +32,15 @@ export function TaskTable({
   isDeletingTask,
   onOpenTask
 }: TaskTableProps) {
+  const confirm = useConfirmationDialog();
+
   async function handleDelete(task: Task) {
-    const confirmed = window.confirm(`Delete "${task.title}"?`);
+    const confirmed = await confirm({
+      title: "Delete task?",
+      description: `This will permanently delete "${task.title}" from the workspace backlog.`,
+      confirmLabel: "Delete Task",
+      tone: "danger"
+    });
 
     if (!confirmed) {
       return;
@@ -146,13 +119,13 @@ export function TaskTable({
                   >
                     {taskStatuses.map((statusValue) => (
                       <option key={statusValue} value={statusValue}>
-                        {prettyStatus(statusValue)}
+                        {formatTaskStatusLabel(statusValue)}
                       </option>
                     ))}
                   </Select>
                 </td>
                 <td>
-                  <Badge variant={resolvePriorityVariant(task.priority)}>{task.priority}</Badge>
+                  <Badge variant={resolveTaskPriorityVariant(task.priority)}>{task.priority}</Badge>
                 </td>
                 <td>
                   <div className="row-identity">
@@ -160,7 +133,7 @@ export function TaskTable({
                       className="avatar"
                       style={{ height: "2.25rem", width: "2.25rem", fontSize: ".72rem" }}
                     >
-                      {resolveInitials(task.assigneeName)}
+                      {getInitials(task.assigneeName)}
                     </span>
                     <div className="row-identity-text">
                       <span className="row-title">{task.assigneeName ?? "Unassigned"}</span>
@@ -173,12 +146,10 @@ export function TaskTable({
                 <td>{task.dueDate ?? "-"}</td>
                 <td>
                   <div className="row-identity-text">
-                    <Badge variant={resolveStatusVariant(task.status)}>
-                      {prettyStatus(task.status)}
+                    <Badge variant={resolveTaskStatusVariant(task.status)}>
+                      {formatTaskStatusLabel(task.status)}
                     </Badge>
-                    <span className="row-subtitle">
-                      {new Date(task.updatedAt).toLocaleDateString()}
-                    </span>
+                    <span className="row-subtitle">{formatShortDate(task.updatedAt)}</span>
                   </div>
                 </td>
                 <td>

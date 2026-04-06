@@ -1,21 +1,12 @@
 import { motion } from "framer-motion";
 
 import { TaskCreator } from "../../features/tasks/components/task-creator";
+import type { CreateTaskInput } from "../../features/tasks/types";
 import type { Member } from "../../shared/types/api";
 import { Badge } from "../../shared/ui/badge";
 import { Card } from "../../shared/ui/card";
 import { AnimatedRouteSection } from "../components/animated-route-section";
 import { revealItem, revealItemTransition } from "../motion";
-
-type CreateTaskInput = {
-  title: string;
-  description?: string;
-  status: "todo" | "in_progress" | "blocked" | "done";
-  priority: "low" | "medium" | "high";
-  dueDate?: string;
-  assigneeId?: number | null;
-  createdByMemberId?: number | null;
-};
 
 type TasksNewRouteProps = {
   members: Member[];

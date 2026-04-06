@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { Pencil, Trash2, UserPlus } from "lucide-react";
 
+import { getInitials } from "../../../shared/lib/format";
 import { memberRoles, type Member, type MemberRole } from "../../../shared/types/api";
 import { Badge } from "../../../shared/ui/badge";
 import { Button } from "../../../shared/ui/button";
@@ -9,6 +10,7 @@ import { Card } from "../../../shared/ui/card";
 import { Input } from "../../../shared/ui/input";
 import { Label } from "../../../shared/ui/label";
 import { Select } from "../../../shared/ui/select";
+import { useConfirmationDialog } from "../../../shared/ui/use-confirmation-dialog";
 
 type MemberPanelProps = {
   activeTeamName?: string | null;
@@ -25,14 +27,6 @@ type MemberPanelProps = {
   isDeletingMember: boolean;
 };
 
-function resolveInitials(fullName: string): string {
-  return fullName
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2);
-}
-
 export function MemberPanel({
   activeTeamName,
   members,
@@ -44,6 +38,7 @@ export function MemberPanel({
   isUpdatingMember,
   isDeletingMember
 }: MemberPanelProps) {
+  const confirm = useConfirmationDialog();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<MemberRole>("member");
@@ -104,7 +99,12 @@ export function MemberPanel({
   }
 
   async function handleDelete(member: Member) {
-    const confirmed = window.confirm(`Delete ${member.fullName}?`);
+    const confirmed = await confirm({
+      title: "Delete member?",
+      description: `Remove ${member.fullName} from this workspace. Their assigned tasks will remain and can be reassigned later.`,
+      confirmLabel: "Delete Member",
+      tone: "danger"
+    });
 
     if (!confirmed) {
       return;
@@ -253,7 +253,7 @@ export function MemberPanel({
                             className="avatar"
                             style={{ height: "2.25rem", width: "2.25rem", fontSize: ".72rem" }}
                           >
-                            {resolveInitials(member.fullName)}
+                            {getInitials(member.fullName)}
                           </span>
                           <div className="min-w-0">
                             <p className="row-title">{member.fullName}</p>

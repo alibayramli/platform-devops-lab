@@ -3,20 +3,18 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Save, Trash2 } from "lucide-react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 
+import { TaskFormFields } from "../../features/tasks/components/task-form-fields";
 import {
-  taskPriorities,
-  taskStatuses,
-  type Member,
-  type Task,
-  type TaskPriority,
-  type TaskStatus
-} from "../../shared/types/api";
+  createTaskFormValues,
+  type TaskFormValues,
+  type UpdateTaskInput
+} from "../../features/tasks/types";
+import { buildUpdateTaskInput } from "../../features/tasks/utils";
+import type { Member, Task } from "../../shared/types/api";
+import { formatDateTime } from "../../shared/lib/format";
 import { Button } from "../../shared/ui/button";
 import { Card } from "../../shared/ui/card";
-import { Input } from "../../shared/ui/input";
-import { Label } from "../../shared/ui/label";
-import { Select } from "../../shared/ui/select";
-import { Textarea } from "../../shared/ui/textarea";
+import { useConfirmationDialog } from "../../shared/ui/use-confirmation-dialog";
 import { AnimatedRouteSection } from "../components/animated-route-section";
 import { revealItem, revealItemTransition } from "../motion";
 
@@ -24,17 +22,7 @@ type TaskDetailRouteProps = {
   tasks: Task[];
   members: Member[];
   isLoadingTasks: boolean;
-  onUpdateTask: (
-    taskId: number,
-    patch: Partial<{
-      title: string;
-      description: string | null;
-      status: TaskStatus;
-      priority: TaskPriority;
-      dueDate: string | null;
-      assigneeId: number | null;
-    }>
-  ) => Promise<void>;
+  onUpdateTask: (taskId: number, patch: UpdateTaskInput) => Promise<void>;
   onDeleteTask: (taskId: number) => Promise<void>;
   isUpdatingTask: boolean;
   isDeletingTask: boolean;
@@ -49,16 +37,12 @@ export function TaskDetailRoute({
   isUpdatingTask,
   isDeletingTask
 }: TaskDetailRouteProps) {
+  const confirm = useConfirmationDialog();
   const navigate = useNavigate();
   const params = useParams();
   const rawTaskId = params.taskId ?? "";
   const taskId = Number(rawTaskId);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<TaskStatus>("todo");
-  const [priority, setPriority] = useState<TaskPriority>("medium");
-  const [assigneeId, setAssigneeId] = useState<number | "">("");
-  const [dueDate, setDueDate] = useState("");
+  const [values, setValues] = useState<TaskFormValues>(() => createTaskFormValues());
 
   const isValidTaskId = Number.isInteger(taskId) && taskId > 0;
 
@@ -75,12 +59,7 @@ export function TaskDetailRoute({
       return;
     }
 
-    setTitle(task.title);
-    setDescription(task.description ?? "");
-    setStatus(task.status);
-    setPriority(task.priority);
-    setAssigneeId(task.assigneeId ?? "");
-    setDueDate(task.dueDate ?? "");
+    setValues(createTaskFormValues(task));
   }, [task]);
 
   if (!isValidTaskId) {
@@ -92,20 +71,13 @@ export function TaskDetailRoute({
       return;
     }
 
-    const cleanTitle = title.trim();
+    const patch = buildUpdateTaskInput(values);
 
-    if (!cleanTitle) {
+    if (!patch) {
       return;
     }
 
-    await onUpdateTask(task.id, {
-      title: cleanTitle,
-      description: description.trim() || null,
-      status,
-      priority,
-      dueDate: dueDate || null,
-      assigneeId: typeof assigneeId === "number" ? assigneeId : null
-    });
+    await onUpdateTask(task.id, patch);
   }
 
   async function handleDelete() {
@@ -113,7 +85,12 @@ export function TaskDetailRoute({
       return;
     }
 
-    const confirmed = window.confirm(`Delete "${task.title}"?`);
+    const confirmed = await confirm({
+      title: "Delete task?",
+      description: `This will permanently delete "${task.title}" from the workspace backlog.`,
+      confirmLabel: "Delete Task",
+      tone: "danger"
+    });
 
     if (!confirmed) {
       return;
@@ -163,7 +140,7 @@ export function TaskDetailRoute({
               <div>
                 <h2 className="section-title">Task #{task.id}</h2>
                 <p className="section-subtitle mt-1">
-                  Last updated {new Date(task.updatedAt).toLocaleString()}
+                  Last updated {formatDateTime(task.updatedAt)}
                 </p>
               </div>
               <Button
@@ -180,114 +157,45 @@ export function TaskDetailRoute({
             </div>
 
             <div className="task-creator-form">
-              <div className="task-creator-main">
-                <div>
-                  <Label>Title</Label>
-                  <Input
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
-                    placeholder="Task title"
-                    maxLength={140}
-                  />
-                </div>
-
-                <div>
-                  <Label>Description</Label>
-                  <Textarea
-                    value={description}
-                    onChange={(event) => setDescription(event.target.value)}
-                    placeholder="Task notes, blockers, and context"
-                    maxLength={800}
-                    className="task-creator-description"
-                  />
-                </div>
-              </div>
-
-              <div className="task-creator-side">
-                <div className="task-creator-meta-grid">
-                  <div>
-                    <Label>Status</Label>
-                    <Select
-                      value={status}
-                      onChange={(event) => setStatus(event.target.value as TaskStatus)}
+              <TaskFormFields
+                members={members}
+                values={values}
+                descriptionClassName="task-creator-description"
+                onChange={(field, value) =>
+                  setValues((currentValues) => ({
+                    ...currentValues,
+                    [field]: value
+                  }))
+                }
+                sideFooter={
+                  <div className="panel-actions">
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="lg"
+                      disabled={isUpdatingTask}
+                      onClick={() => {
+                        void handleSave();
+                      }}
                     >
-                      {taskStatuses.map((statusValue) => (
-                        <option key={statusValue} value={statusValue}>
-                          {statusValue}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label>Priority</Label>
-                    <Select
-                      value={priority}
-                      onChange={(event) => setPriority(event.target.value as TaskPriority)}
+                      <Save size={16} />
+                      {isUpdatingTask ? "Saving..." : "Save Changes"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      disabled={isDeletingTask}
+                      onClick={() => {
+                        void handleDelete();
+                      }}
                     >
-                      {taskPriorities.map((priorityValue) => (
-                        <option key={priorityValue} value={priorityValue}>
-                          {priorityValue}
-                        </option>
-                      ))}
-                    </Select>
+                      <Trash2 size={16} />
+                      {isDeletingTask ? "Deleting..." : "Delete Task"}
+                    </Button>
                   </div>
-
-                  <div>
-                    <Label>Assignee</Label>
-                    <Select
-                      value={assigneeId}
-                      onChange={(event) =>
-                        setAssigneeId(event.target.value ? Number(event.target.value) : "")
-                      }
-                    >
-                      <option value="">Unassigned</option>
-                      {members.map((member) => (
-                        <option key={member.id} value={member.id}>
-                          {member.fullName}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label>Due Date</Label>
-                    <Input
-                      type="date"
-                      value={dueDate}
-                      onChange={(event) => setDueDate(event.target.value)}
-                      className="ui-input-date"
-                    />
-                  </div>
-                </div>
-
-                <div className="panel-actions">
-                  <Button
-                    type="button"
-                    variant="primary"
-                    size="lg"
-                    disabled={isUpdatingTask}
-                    onClick={() => {
-                      void handleSave();
-                    }}
-                  >
-                    <Save size={16} />
-                    {isUpdatingTask ? "Saving..." : "Save Changes"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    disabled={isDeletingTask}
-                    onClick={() => {
-                      void handleDelete();
-                    }}
-                  >
-                    <Trash2 size={16} />
-                    {isDeletingTask ? "Deleting..." : "Delete Task"}
-                  </Button>
-                </div>
-              </div>
+                }
+              />
             </div>
           </Card>
         </motion.div>

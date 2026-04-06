@@ -4,6 +4,7 @@ import { Button } from "../../../shared/ui/button";
 import { Input } from "../../../shared/ui/input";
 import { Label } from "../../../shared/ui/label";
 import { Select } from "../../../shared/ui/select";
+import { formatTaskPriorityLabel, formatTaskStatusLabel } from "../utils";
 
 type TaskFiltersProps = {
   members: Member[];
@@ -32,7 +33,7 @@ export function TaskFiltersBar({ members, filters, onChangeFilters }: TaskFilter
           <option value="">All</option>
           {taskStatuses.map((status) => (
             <option key={status} value={status}>
-              {status.replace("_", " ")}
+              {formatTaskStatusLabel(status)}
             </option>
           ))}
         </Select>
@@ -52,7 +53,7 @@ export function TaskFiltersBar({ members, filters, onChangeFilters }: TaskFilter
           <option value="">All</option>
           {taskPriorities.map((priority) => (
             <option key={priority} value={priority}>
-              {priority}
+              {formatTaskPriorityLabel(priority)}
             </option>
           ))}
         </Select>

@@ -1,4 +1,5 @@
 import type { TeamSummary } from "../../../shared/types/api";
+import { formatNumber } from "../../../shared/lib/format";
 import {
   resolveSummaryMetricValue,
   summaryMetricDefinitions,
@@ -12,10 +13,6 @@ type TeamSummaryCardsProps = {
 };
 
 export type { SummaryMetricId } from "../summary-metrics";
-
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat("en-US").format(value);
-}
 
 export function TeamSummaryCards({ summary, onSelectMetric }: TeamSummaryCardsProps) {
   const metrics = summaryMetricOrder.map((metricId) => ({

@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 
 import { MemberPanel } from "../../features/members/components/member-panel";
 import { TeamSwitcher } from "../../features/teams/components/team-switcher";
+import { formatShortDate } from "../../shared/lib/format";
 import type { Member, TeamListItem } from "../../shared/types/api";
 import { Badge } from "../../shared/ui/badge";
 import { Card } from "../../shared/ui/card";
@@ -36,14 +37,6 @@ type TeamManageRouteProps = {
   onUpdateMember: (memberId: number, input: UpdateMemberInput) => Promise<void>;
   onDeleteMember: (memberId: number) => Promise<void>;
 };
-
-function formatCreatedAt(value: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric"
-  }).format(new Date(value));
-}
 
 export function TeamManageRoute({
   teams,
@@ -159,7 +152,7 @@ export function TeamManageRoute({
                         <div className="workspace-directory-meta">
                           <span>{team.memberCount} members</span>
                           <span>{team.taskCount} tasks</span>
-                          <span>Created {formatCreatedAt(team.createdAt)}</span>
+                          <span>Created {formatShortDate(team.createdAt)}</span>
                         </div>
                       </li>
                     );
