@@ -21,23 +21,31 @@ export async function updateExistingTeam(
   teamId: number,
   input: UpdateTeamInput
 ): Promise<TeamListItem> {
-  await assertTeamExists(teamId);
-  return updateTeamById(teamId, input);
-}
+  const updatedTeam = await updateTeamById(teamId, input);
 
-export async function deleteExistingTeam(teamId: number): Promise<void> {
-  await assertTeamExists(teamId);
-  await deleteTeamById(teamId);
-}
-
-export async function getSummaryByTeamId(teamId: number): Promise<TeamSummary> {
-  const exists = await teamExists(teamId);
-
-  if (!exists) {
+  if (!updatedTeam) {
     throw new HttpError(404, "Team not found");
   }
 
-  return getTeamSummary(teamId);
+  return updatedTeam;
+}
+
+export async function deleteExistingTeam(teamId: number): Promise<void> {
+  const wasDeleted = await deleteTeamById(teamId);
+
+  if (!wasDeleted) {
+    throw new HttpError(404, "Team not found");
+  }
+}
+
+export async function getSummaryByTeamId(teamId: number): Promise<TeamSummary> {
+  const summary = await getTeamSummary(teamId);
+
+  if (!summary) {
+    throw new HttpError(404, "Team not found");
+  }
+
+  return summary;
 }
 
 export async function assertTeamExists(teamId: number): Promise<void> {

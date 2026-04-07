@@ -3,14 +3,12 @@ import type { FormEvent } from "react";
 import { Pencil, Trash2, UserPlus } from "lucide-react";
 
 import { getInitials } from "../../../shared/lib/format";
-import { memberRoles, type Member, type MemberRole } from "../../../shared/types/api";
+import type { Member, MemberRole } from "../../../shared/types/api";
 import { Badge } from "../../../shared/ui/badge";
 import { Button } from "../../../shared/ui/button";
 import { Card } from "../../../shared/ui/card";
-import { Input } from "../../../shared/ui/input";
-import { Label } from "../../../shared/ui/label";
-import { Select } from "../../../shared/ui/select";
 import { useConfirmationDialog } from "../../../shared/ui/use-confirmation-dialog";
+import { MemberFormFields } from "./member-form-fields";
 
 type MemberPanelProps = {
   activeTeamName?: string | null;
@@ -26,6 +24,13 @@ type MemberPanelProps = {
   isUpdatingMember: boolean;
   isDeletingMember: boolean;
 };
+
+function normalizeMemberInput(input: { fullName: string; email: string }) {
+  return {
+    fullName: input.fullName.trim(),
+    email: input.email.trim().toLowerCase()
+  };
+}
 
 export function MemberPanel({
   activeTeamName,
@@ -49,16 +54,15 @@ export function MemberPanel({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const cleanName = fullName.trim();
-    const cleanEmail = email.trim().toLowerCase();
+    const normalized = normalizeMemberInput({ fullName, email });
 
-    if (!cleanName || !cleanEmail) {
+    if (!normalized.fullName || !normalized.email) {
       return;
     }
 
     await onCreateMember({
-      fullName: cleanName,
-      email: cleanEmail,
+      fullName: normalized.fullName,
+      email: normalized.email,
       role
     });
 
@@ -82,16 +86,18 @@ export function MemberPanel({
   }
 
   async function handleUpdate(memberId: number) {
-    const cleanName = editFullName.trim();
-    const cleanEmail = editEmail.trim().toLowerCase();
+    const normalized = normalizeMemberInput({
+      fullName: editFullName,
+      email: editEmail
+    });
 
-    if (!cleanName || !cleanEmail) {
+    if (!normalized.fullName || !normalized.email) {
       return;
     }
 
     await onUpdateMember(memberId, {
-      fullName: cleanName,
-      email: cleanEmail,
+      fullName: normalized.fullName,
+      email: normalized.email,
       role: editRole
     });
 
@@ -139,37 +145,14 @@ export function MemberPanel({
           void handleSubmit(event);
         }}
       >
-        <div>
-          <Label>Name</Label>
-          <Input
-            value={fullName}
-            onChange={(event) => setFullName(event.target.value)}
-            placeholder="Sam Rivers"
-            maxLength={80}
-          />
-        </div>
-
-        <div>
-          <Label>Email</Label>
-          <Input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="sam@example.com"
-            maxLength={120}
-          />
-        </div>
-
-        <div>
-          <Label>Role</Label>
-          <Select value={role} onChange={(event) => setRole(event.target.value as MemberRole)}>
-            {memberRoles.map((roleValue) => (
-              <option key={roleValue} value={roleValue}>
-                {roleValue}
-              </option>
-            ))}
-          </Select>
-        </div>
+        <MemberFormFields
+          name={fullName}
+          email={email}
+          role={role}
+          onNameChange={setFullName}
+          onEmailChange={setEmail}
+          onRoleChange={setRole}
+        />
 
         <Button type="submit" variant="primary" size="lg" disabled={isCreatingMember}>
           <UserPlus size={16} />
@@ -193,29 +176,17 @@ export function MemberPanel({
                   {isEditing ? (
                     <>
                       <div className="member-editor-grid">
-                        <Input
-                          value={editFullName}
-                          onChange={(event) => setEditFullName(event.target.value)}
-                          placeholder="Full name"
-                          maxLength={80}
+                        <MemberFormFields
+                          name={editFullName}
+                          email={editEmail}
+                          role={editRole}
+                          onNameChange={setEditFullName}
+                          onEmailChange={setEditEmail}
+                          onRoleChange={setEditRole}
+                          showLabels={false}
+                          namePlaceholder="Full name"
+                          emailPlaceholder="Email"
                         />
-                        <Input
-                          type="email"
-                          value={editEmail}
-                          onChange={(event) => setEditEmail(event.target.value)}
-                          placeholder="Email"
-                          maxLength={120}
-                        />
-                        <Select
-                          value={editRole}
-                          onChange={(event) => setEditRole(event.target.value as MemberRole)}
-                        >
-                          {memberRoles.map((roleValue) => (
-                            <option key={roleValue} value={roleValue}>
-                              {roleValue}
-                            </option>
-                          ))}
-                        </Select>
                       </div>
                       <div className="member-row-actions">
                         <Button

@@ -5,9 +5,8 @@ import { PlusCircle, Save, Trash2 } from "lucide-react";
 import type { TeamListItem } from "../../../shared/types/api";
 import { Button } from "../../../shared/ui/button";
 import { Card } from "../../../shared/ui/card";
-import { Input } from "../../../shared/ui/input";
-import { Label } from "../../../shared/ui/label";
 import { useConfirmationDialog } from "../../../shared/ui/use-confirmation-dialog";
+import { TeamFormFields } from "./team-form-fields";
 
 type TeamSwitcherProps = {
   activeTeam: TeamListItem | null;
@@ -21,6 +20,13 @@ type TeamSwitcherProps = {
   isUpdatingTeam: boolean;
   isDeletingTeam: boolean;
 };
+
+function normalizeWorkspaceInput(input: { name: string; description: string }) {
+  return {
+    description: input.description.trim(),
+    name: input.name.trim()
+  };
+}
 
 export function TeamSwitcher({
   activeTeam,
@@ -56,15 +62,15 @@ export function TeamSwitcher({
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const cleanName = name.trim();
+    const normalized = normalizeWorkspaceInput({ name, description });
 
-    if (!cleanName) {
+    if (!normalized.name) {
       return;
     }
 
     await onCreateTeam({
-      name: cleanName,
-      description: description.trim() || undefined
+      name: normalized.name,
+      description: normalized.description || undefined
     });
 
     setName("");
@@ -79,15 +85,18 @@ export function TeamSwitcher({
       return;
     }
 
-    const cleanName = editName.trim();
+    const normalized = normalizeWorkspaceInput({
+      name: editName,
+      description: editDescription
+    });
 
-    if (!cleanName) {
+    if (!normalized.name) {
       return;
     }
 
     await onUpdateTeam(activeTeam.id, {
-      name: cleanName,
-      description: editDescription.trim() || null
+      name: normalized.name,
+      description: normalized.description || null
     });
   }
 
@@ -150,25 +159,15 @@ export function TeamSwitcher({
             void handleCreate(event);
           }}
         >
-          <div>
-            <Label>New Workspace Name</Label>
-            <Input
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Frontend Guild"
-              maxLength={80}
-            />
-          </div>
-
-          <div>
-            <Label>Description</Label>
-            <Input
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="Optional purpose for this workspace"
-              maxLength={240}
-            />
-          </div>
+          <TeamFormFields
+            name={name}
+            description={description}
+            onNameChange={setName}
+            onDescriptionChange={setDescription}
+            nameLabel="New Workspace Name"
+            namePlaceholder="Frontend Guild"
+            descriptionPlaceholder="Optional purpose for this workspace"
+          />
 
           <Button type="submit" variant="primary" size="lg" disabled={isCreatingTeam}>
             <PlusCircle size={16} />
@@ -182,25 +181,15 @@ export function TeamSwitcher({
             void handleUpdate(event);
           }}
         >
-          <div>
-            <Label>Workspace Name</Label>
-            <Input
-              value={editName}
-              onChange={(event) => setEditName(event.target.value)}
-              placeholder="Platform Guild"
-              maxLength={80}
-            />
-          </div>
-
-          <div>
-            <Label>Description</Label>
-            <Input
-              value={editDescription}
-              onChange={(event) => setEditDescription(event.target.value)}
-              placeholder="Purpose and scope"
-              maxLength={240}
-            />
-          </div>
+          <TeamFormFields
+            name={editName}
+            description={editDescription}
+            onNameChange={setEditName}
+            onDescriptionChange={setEditDescription}
+            nameLabel="Workspace Name"
+            namePlaceholder="Platform Guild"
+            descriptionPlaceholder="Purpose and scope"
+          />
 
           <div className="panel-actions">
             <Button type="submit" variant="primary" size="lg" disabled={isUpdatingTeam}>

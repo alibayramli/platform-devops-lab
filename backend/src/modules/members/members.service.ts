@@ -1,4 +1,5 @@
 import { HttpError } from "../../shared/http-error.js";
+import { isUniqueConstraintViolation } from "../../shared/postgres-errors.js";
 import { assertTeamExists } from "../teams/teams.service.js";
 import {
   createMemberForTeam,
@@ -20,7 +21,7 @@ export async function createMember(teamId: number, input: CreateMemberInput): Pr
   try {
     return await createMemberForTeam(teamId, input);
   } catch (error) {
-    if (typeof error === "object" && error !== null && "code" in error && error.code === "23505") {
+    if (isUniqueConstraintViolation(error)) {
       throw new HttpError(409, "A member with this email already exists in the team");
     }
 
@@ -39,7 +40,7 @@ export async function updateMember(
   try {
     return await updateMemberById(memberId, teamId, input);
   } catch (error) {
-    if (typeof error === "object" && error !== null && "code" in error && error.code === "23505") {
+    if (isUniqueConstraintViolation(error)) {
       throw new HttpError(409, "A member with this email already exists in the team");
     }
 

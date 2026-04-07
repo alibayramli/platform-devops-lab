@@ -3,11 +3,18 @@ import { motion } from "framer-motion";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 
 import type { SummaryMetricId } from "../../features/teams/components/team-summary-cards";
+import {
+  countTasksByPriority,
+  countTasksDueWithinDays,
+  countTasksWithDescriptions,
+  formatPercent
+} from "../../features/tasks/lib/task-analytics";
 import { formatNumber } from "../../shared/lib/format";
 import type { Task, TeamSummary } from "../../shared/types/api";
 import { Card } from "../../shared/ui/card";
 import { AnimatedRouteSection } from "../components/animated-route-section";
 import { revealItem, revealItemTransition } from "../motion";
+import { buildActivity, buildChart, buildMetricCards } from "./overview-route.helpers";
 
 type OverviewRouteProps = {
   summary: TeamSummary | undefined;
@@ -16,194 +23,6 @@ type OverviewRouteProps = {
   totalTaskCount: number;
   onSelectMetric: (metricId: SummaryMetricId) => void;
 };
-
-type ChartPoint = {
-  label: string;
-  totalHeight: number;
-  completedHeight: number;
-};
-
-type MetricCard = {
-  id: SummaryMetricId;
-  label: string;
-  value: number;
-  trend: number;
-  note: string;
-  direction: "up" | "down";
-};
-
-const fallbackActivity = [38, 64, 52, 56, 72, 61, 53, 42, 64, 39, 66, 48, 41, 47, 55, 63, 51, 58];
-const fallbackChart = [720, 2200, 1800, 1920, 2550, 2060, 1780, 1520, 2220];
-
-function formatPercent(value: number): string {
-  return `${Math.round(value)}%`;
-}
-
-function formatMonth(date: Date): string {
-  return new Intl.DateTimeFormat("en-US", { month: "short" }).format(date);
-}
-
-function getRelativeNote(metricId: SummaryMetricId): string {
-  switch (metricId) {
-    case "done":
-      return "Tasks finished this cycle";
-    case "in_progress":
-      return "Currently being worked on";
-    case "todo":
-      return "Tasks awaiting review";
-    case "blocked":
-      return "Missed or blocked this month";
-    case "tasks":
-      return "Tasks assigned this month";
-    case "members":
-      return "Active collaborators";
-  }
-}
-
-function getMetricTrend(value: number, total: number, inverse = false): number {
-  if (total === 0) {
-    return 0;
-  }
-
-  const percentage = Math.max(4, Math.round((value / total) * 100));
-  return inverse ? Math.max(3, 24 - Math.round(percentage / 3)) : Math.min(percentage, 32);
-}
-
-function buildMetricCards(summary: TeamSummary | undefined, tasks: Task[]): MetricCard[] {
-  const total = summary?.totalTasks ?? tasks.length;
-  const overdueCount = tasks.filter((task) => {
-    if (!task.dueDate || task.status === "done") {
-      return false;
-    }
-
-    return new Date(task.dueDate).getTime() < new Date().setHours(0, 0, 0, 0);
-  }).length;
-
-  return [
-    {
-      id: "done",
-      label: "Tasks Completed",
-      value: summary?.done ?? 0,
-      trend: getMetricTrend(summary?.done ?? 0, total),
-      note: getRelativeNote("done"),
-      direction: "up"
-    },
-    {
-      id: "in_progress",
-      label: "Tasks In Progress",
-      value: summary?.inProgress ?? 0,
-      trend: getMetricTrend(summary?.inProgress ?? 0, total),
-      note: getRelativeNote("in_progress"),
-      direction: "up"
-    },
-    {
-      id: "todo",
-      label: "Pending Approvals",
-      value: summary?.todo ?? 0,
-      trend: getMetricTrend(summary?.todo ?? 0, total),
-      note: getRelativeNote("todo"),
-      direction: "up"
-    },
-    {
-      id: "blocked",
-      label: "Overdue Tasks",
-      value: overdueCount,
-      trend: getMetricTrend(overdueCount, Math.max(total, 1), true),
-      note: getRelativeNote("blocked"),
-      direction: overdueCount > 0 ? "down" : "up"
-    },
-    {
-      id: "tasks",
-      label: "New Tasks Assigned",
-      value: total,
-      trend: getMetricTrend(total, Math.max(total, 1)),
-      note: getRelativeNote("tasks"),
-      direction: "up"
-    }
-  ];
-}
-
-function buildChart(tasks: Task[]): ChartPoint[] {
-  const end = new Date();
-  const start = new Date(end.getFullYear(), end.getMonth() - 8, 1);
-  const maxTotal = 3000;
-  const monthKeys = Array.from({ length: 9 }, (_, index) => {
-    const monthDate = new Date(start.getFullYear(), start.getMonth() + index, 1);
-    return {
-      key: `${monthDate.getFullYear()}-${monthDate.getMonth()}`,
-      label: formatMonth(monthDate)
-    };
-  });
-
-  const counts = monthKeys.map(({ key }, index) => {
-    const monthTasks = tasks.filter((task) => {
-      const date = new Date(task.updatedAt);
-      return `${date.getFullYear()}-${date.getMonth()}` === key;
-    });
-    const doneTasks = monthTasks.filter((task) => task.status === "done");
-
-    if (tasks.length === 0) {
-      return {
-        total: fallbackChart[index],
-        completed: Math.round(fallbackChart[index] * 0.62)
-      };
-    }
-
-    const maxCount = Math.max(
-      ...monthKeys.map((month) => {
-        return tasks.filter((task) => {
-          const date = new Date(task.updatedAt);
-          return `${date.getFullYear()}-${date.getMonth()}` === month.key;
-        }).length;
-      }),
-      1
-    );
-
-    const baseline = fallbackChart[index] * 0.32;
-    const total = Math.round(
-      Math.min(
-        maxTotal,
-        baseline + ((monthTasks.length || 0) / maxCount) * (fallbackChart[index] * 0.82)
-      )
-    );
-    const completed = Math.round(
-      total * (doneTasks.length / Math.max(monthTasks.length, 1) || 0.6)
-    );
-
-    return {
-      total: Math.max(total, monthTasks.length > 0 ? 520 : 340),
-      completed: Math.max(completed, monthTasks.length > 0 ? 260 : 180)
-    };
-  });
-
-  return monthKeys.map((month, index) => ({
-    label: month.label,
-    totalHeight: counts[index].total,
-    completedHeight: Math.min(counts[index].completed, counts[index].total)
-  }));
-}
-
-function buildActivity(tasks: Task[]): number[] {
-  if (tasks.length === 0) {
-    return fallbackActivity;
-  }
-
-  const weighted = tasks.reduce<number[]>(
-    (accumulator, task, index) => {
-      const slot = index % 18;
-      const weight = task.priority === "high" ? 24 : task.priority === "medium" ? 18 : 12;
-      accumulator[slot] = (accumulator[slot] ?? 0) + weight;
-      return accumulator;
-    },
-    Array.from({ length: 18 }, () => 0)
-  );
-
-  const maxValue = Math.max(...weighted, 1);
-  return weighted.map((value, index) => {
-    const baseline = fallbackActivity[index];
-    return Math.max(12, Math.round(baseline * 0.45 + (value / maxValue) * 52));
-  });
-}
 
 export function OverviewRoute({
   summary,
@@ -217,18 +36,11 @@ export function OverviewRoute({
   const activity = useMemo(() => buildActivity(tasks), [tasks]);
   const [activeChartIndex, setActiveChartIndex] = useState<number | null>(null);
 
-  const highPriorityCount = tasks.filter((task) => task.priority === "high").length;
-  const mediumPriorityCount = tasks.filter((task) => task.priority === "medium").length;
-  const lowPriorityCount = tasks.filter((task) => task.priority === "low").length;
-  const tasksWithNotes = tasks.filter((task) => Boolean(task.description)).length;
-  const dueSoon = tasks.filter((task) => {
-    if (!task.dueDate || task.status === "done") {
-      return false;
-    }
-
-    const distance = new Date(task.dueDate).getTime() - Date.now();
-    return distance >= 0 && distance <= 1000 * 60 * 60 * 24 * 7;
-  }).length;
+  const highPriorityCount = countTasksByPriority(tasks, "high");
+  const mediumPriorityCount = countTasksByPriority(tasks, "medium");
+  const lowPriorityCount = countTasksByPriority(tasks, "low");
+  const tasksWithNotes = countTasksWithDescriptions(tasks);
+  const dueSoon = countTasksDueWithinDays(tasks, 7);
 
   return (
     <AnimatedRouteSection className="dashboard-route-stack">

@@ -1,0 +1,88 @@
+html[data-theme="dark"] .sidebar-link:hover,
+html[data-theme="dark"] .sidebar-project-button:hover,
+html[data-theme="dark"] .sidebar-subnav-link:hover {
+  background: rgba(36, 43, 57, 0.76);
+  border-color: rgba(73, 82, 102, 0.78);
+}
+
+html[data-theme="dark"] .sidebar-link[data-active="true"],
+html[data-theme="dark"] .sidebar-project-button[data-active="true"],
+html[data-theme="dark"] .sidebar-subnav-link[data-active="true"] {
+  background: rgba(41, 48, 63, 0.92);
+  border-color: rgba(82, 92, 113, 0.86);
+}
+
+html[data-theme="dark"] .sidebar-user-card,
+html[data-theme="dark"] .avatar-stack-more,
+html[data-theme="dark"] .sync-indicator,
+html[data-theme="dark"] .checkbox-pill {
+  background: rgba(29, 36, 50, 0.98);
+  border-color: rgba(58, 68, 87, 0.96);
+}
+
+html[data-theme="dark"] .avatar-stack-more,
+html[data-theme="dark"] .sync-indicator {
+  color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .activity-strip {
+  border-color: rgba(73, 82, 102, 0.86);
+  background: linear-gradient(180deg, rgba(39, 46, 61, 0.88), rgba(31, 37, 49, 0.92));
+}
+
+html[data-theme="dark"] .chart-column-tooltip {
+  background: rgba(28, 34, 45, 0.96);
+  border-color: rgba(73, 82, 102, 0.82);
+}
+
+html[data-theme="dark"] .confirm-dialog-backdrop {
+  background:
+    radial-gradient(circle at top, rgba(141, 151, 255, 0.14), transparent 38%),
+    rgba(7, 12, 18, 0.62);
+}
+
+html[data-theme="dark"] .confirm-dialog-panel {
+  background: linear-gradient(180deg, rgba(36, 43, 57, 0.98), rgba(31, 37, 49, 0.96));
+  border-color: rgba(73, 82, 102, 0.92);
+  box-shadow: 0 26px 54px rgba(0, 0, 0, 0.3);
+}
+
+html[data-theme="dark"] .chart-grid {
+  border-bottom-color: rgba(58, 68, 87, 0.96);
+}
+
+html[data-theme="dark"] .chart-grid-line {
+  border-top-color: rgba(48, 56, 74, 0.88);
+}
+
+html[data-theme="dark"] .chart-bar-back {
+  background: linear-gradient(180deg, rgba(141, 151, 255, 0.28), rgba(141, 151, 255, 0.1));
+  box-shadow: none;
+}
+
+html[data-theme="dark"] .chart-bar-front {
+  box-shadow: none;
+}
+
+html[data-theme="dark"] .table-shell {
+  border-color: rgba(73, 82, 102, 0.82);
+  background: rgba(30, 36, 47, 0.8);
+}
+
+html[data-theme="dark"] .dashboard-table thead th {
+  border-bottom-color: rgba(73, 82, 102, 0.82);
+  background: rgba(36, 43, 57, 0.76);
+}
+
+html[data-theme="dark"] .dashboard-table tbody td {
+  border-bottom-color: rgba(48, 56, 74, 0.96);
+}
+
+html[data-theme="dark"] .dashboard-table tbody tr:hover {
+  background: rgba(131, 144, 255, 0.06);
+}
+
+html[data-theme="dark"] .workspace-directory-card[data-active="true"] {
+  border-color: rgba(141, 151, 255, 0.34);
+  background: rgba(141, 151, 255, 0.08);
+}

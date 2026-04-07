@@ -4,16 +4,37 @@ import { db } from "../../db/pool.js";
 import { members, tasks, teams } from "../../db/schema.js";
 import type { CreateTeamInput, TeamListItem, TeamSummary, UpdateTeamInput } from "./teams.types.js";
 
+const teamListItemSelection = {
+  id: teams.id,
+  name: teams.name,
+  description: teams.description,
+  createdAt: teams.createdAt,
+  memberCount: sql<number>`count(distinct ${members.id})`.mapWith(Number),
+  taskCount: sql<number>`count(distinct ${tasks.id})`.mapWith(Number)
+};
+
+const teamSummarySelection = {
+  totalTasks: sql<number>`count(distinct ${tasks.id})`.mapWith(Number),
+  todo: sql<number>`count(distinct ${tasks.id}) filter (where ${tasks.status} = 'todo')`.mapWith(
+    Number
+  ),
+  inProgress:
+    sql<number>`count(distinct ${tasks.id}) filter (where ${tasks.status} = 'in_progress')`.mapWith(
+      Number
+    ),
+  blocked:
+    sql<number>`count(distinct ${tasks.id}) filter (where ${tasks.status} = 'blocked')`.mapWith(
+      Number
+    ),
+  done: sql<number>`count(distinct ${tasks.id}) filter (where ${tasks.status} = 'done')`.mapWith(
+    Number
+  ),
+  memberCount: sql<number>`count(distinct ${members.id})`.mapWith(Number)
+};
+
 async function getTeamListItemById(teamId: number): Promise<TeamListItem | null> {
   const [row] = await db
-    .select({
-      id: teams.id,
-      name: teams.name,
-      description: teams.description,
-      createdAt: teams.createdAt,
-      memberCount: sql<number>`count(distinct ${members.id})`.mapWith(Number),
-      taskCount: sql<number>`count(distinct ${tasks.id})`.mapWith(Number)
-    })
+    .select(teamListItemSelection)
     .from(teams)
     .leftJoin(members, eq(members.teamId, teams.id))
     .leftJoin(tasks, eq(tasks.teamId, teams.id))
@@ -25,14 +46,7 @@ async function getTeamListItemById(teamId: number): Promise<TeamListItem | null>
 
 export async function listTeams(): Promise<TeamListItem[]> {
   return db
-    .select({
-      id: teams.id,
-      name: teams.name,
-      description: teams.description,
-      createdAt: teams.createdAt,
-      memberCount: sql<number>`count(distinct ${members.id})`.mapWith(Number),
-      taskCount: sql<number>`count(distinct ${tasks.id})`.mapWith(Number)
-    })
+    .select(teamListItemSelection)
     .from(teams)
     .leftJoin(members, eq(members.teamId, teams.id))
     .leftJoin(tasks, eq(tasks.teamId, teams.id))
@@ -64,7 +78,7 @@ export async function createTeam(input: CreateTeamInput): Promise<TeamListItem> 
 export async function updateTeamById(
   teamId: number,
   input: UpdateTeamInput
-): Promise<TeamListItem> {
+): Promise<TeamListItem | null> {
   const updatePayload: Partial<{
     name: string;
     description: string | null;
@@ -79,18 +93,12 @@ export async function updateTeamById(
   }
 
   await db.update(teams).set(updatePayload).where(eq(teams.id, teamId));
-
-  const updated = await getTeamListItemById(teamId);
-
-  if (!updated) {
-    throw new Error("Failed to update team");
-  }
-
-  return updated;
+  return getTeamListItemById(teamId);
 }
 
-export async function deleteTeamById(teamId: number): Promise<void> {
-  await db.delete(teams).where(eq(teams.id, teamId));
+export async function deleteTeamById(teamId: number): Promise<boolean> {
+  const [deleted] = await db.delete(teams).where(eq(teams.id, teamId)).returning({ id: teams.id });
+  return Boolean(deleted);
 }
 
 export async function teamExists(teamId: number): Promise<boolean> {
@@ -98,40 +106,14 @@ export async function teamExists(teamId: number): Promise<boolean> {
   return rows.length > 0;
 }
 
-export async function getTeamSummary(teamId: number): Promise<TeamSummary> {
+export async function getTeamSummary(teamId: number): Promise<TeamSummary | null> {
   const [row] = await db
-    .select({
-      totalTasks: sql<number>`count(distinct ${tasks.id})`.mapWith(Number),
-      todo: sql<number>`count(distinct ${tasks.id}) filter (where ${tasks.status} = 'todo')`.mapWith(
-        Number
-      ),
-      inProgress:
-        sql<number>`count(distinct ${tasks.id}) filter (where ${tasks.status} = 'in_progress')`.mapWith(
-          Number
-        ),
-      blocked:
-        sql<number>`count(distinct ${tasks.id}) filter (where ${tasks.status} = 'blocked')`.mapWith(
-          Number
-        ),
-      done: sql<number>`count(distinct ${tasks.id}) filter (where ${tasks.status} = 'done')`.mapWith(
-        Number
-      ),
-      memberCount: sql<number>`count(distinct ${members.id})`.mapWith(Number)
-    })
+    .select(teamSummarySelection)
     .from(teams)
     .leftJoin(members, eq(members.teamId, teams.id))
     .leftJoin(tasks, eq(tasks.teamId, teams.id))
     .where(eq(teams.id, teamId))
     .groupBy(teams.id);
 
-  return (
-    row ?? {
-      totalTasks: 0,
-      todo: 0,
-      inProgress: 0,
-      blocked: 0,
-      done: 0,
-      memberCount: 0
-    }
-  );
+  return row ?? null;
 }

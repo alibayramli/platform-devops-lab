@@ -5,18 +5,9 @@ import {
   createTaskForTeam,
   deleteTaskById,
   listTasksByTeamId,
-  taskExists,
   updateTaskById
 } from "./tasks.repository.js";
 import type { CreateTaskInput, Task, TaskFilters, UpdateTaskInput } from "./tasks.types.js";
-
-async function assertTaskExists(teamId: number, taskId: number): Promise<void> {
-  const exists = await taskExists(taskId, teamId);
-
-  if (!exists) {
-    throw new HttpError(404, "Task not found");
-  }
-}
 
 export async function getTasksByTeamId(teamId: number, filters: TaskFilters): Promise<Task[]> {
   await assertTeamExists(teamId);
@@ -42,18 +33,26 @@ export async function updateTask(
   taskId: number,
   input: UpdateTaskInput
 ): Promise<Task> {
-  await assertTeamExists(teamId);
-  await assertTaskExists(teamId, taskId);
-
   if (typeof input.assigneeId === "number") {
+    await assertTeamExists(teamId);
     await assertMemberInTeam(teamId, input.assigneeId);
   }
 
-  return updateTaskById(taskId, teamId, input);
+  const updatedTask = await updateTaskById(taskId, teamId, input);
+
+  if (!updatedTask) {
+    await assertTeamExists(teamId);
+    throw new HttpError(404, "Task not found");
+  }
+
+  return updatedTask;
 }
 
 export async function deleteTask(teamId: number, taskId: number): Promise<void> {
-  await assertTeamExists(teamId);
-  await assertTaskExists(teamId, taskId);
-  await deleteTaskById(taskId, teamId);
+  const wasDeleted = await deleteTaskById(taskId, teamId);
+
+  if (!wasDeleted) {
+    await assertTeamExists(teamId);
+    throw new HttpError(404, "Task not found");
+  }
 }
